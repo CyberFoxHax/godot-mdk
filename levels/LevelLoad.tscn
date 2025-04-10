@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://dkto6v631k2pe"]
+
+[ext_resource type="Script" uid="uid://dpyveylxifg4d" path="res://levels/level_load.gd" id="1_1ocvx"]
+
+[node name="LevelLoad" type="Node3D"]
+script = ExtResource("1_1ocvx")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 10, 0)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+
+[node name="ItemList" type="ItemList" parent="."]
+visible = false
+offset_right = 367.0
+offset_bottom = 479.0

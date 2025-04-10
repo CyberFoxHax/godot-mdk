@@ -2,7 +2,7 @@
 
 [ext_resource path="res://actors/player_bullet.gd" type="Script" id=1]
 
-[sub_resource type="SpatialMaterial" id=1]
+[sub_resource type="StandardMaterial3D" id=1]
 flags_unshaded = true
 params_billboard_mode = 3
 particles_anim_h_frames = 1
@@ -12,7 +12,7 @@ particles_anim_loop = false
 [sub_resource type="QuadMesh" id=2]
 material = SubResource( 1 )
 
-[node name="PlayerBullet" type="CPUParticles"]
+[node name="PlayerBullet" type="CPUParticles3D"]
 emitting = false
 one_shot = true
 explosiveness = 1.0

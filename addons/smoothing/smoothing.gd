@@ -18,14 +18,14 @@
 #	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #	SOFTWARE.
 
-extends Spatial
+extends Node3D
 
-export (NodePath) var target: NodePath setget set_target, get_target
+@export var target: NodePath: get = get_target, set = set_target
 
-var _m_Target: Spatial
+var _m_Target: Node3D
 
-var _m_trCurr: Transform
-var _m_trPrev: Transform
+var _m_trCurr: Transform3D
+var _m_trPrev: Transform3D
 
 const SF_ENABLED = 1 << 0
 const SF_TRANSLATE = 1 << 1
@@ -34,7 +34,7 @@ const SF_SLERP = 1 << 3
 const SF_DIRTY = 1 << 4
 const SF_INVISIBLE = 1 << 5
 
-export (int, FLAGS, "enabled", "translate", "basis", "slerp") var flags: int = SF_ENABLED | SF_TRANSLATE | SF_BASIS setget _set_flags, _get_flags
+@export var flags: int = SF_ENABLED | SF_TRANSLATE | SF_BASIS: get = _get_flags, set = _set_flags # (int, FLAGS, "enabled", "translate", "basis", "slerp")
 
 ##########################################################################################
 # USER FUNCS
@@ -69,8 +69,8 @@ func is_enabled():
 
 
 func _ready():
-	_m_trCurr = Transform()
-	_m_trPrev = Transform()
+	_m_trCurr = Transform3D()
+	_m_trPrev = Transform3D()
 
 
 func set_target(new_value):
@@ -146,11 +146,11 @@ func _FindTarget():
 	var targ = get_node(target)
 
 	if ! targ:
-		printerr("ERROR SmoothingNode : Target " + target + " not found")
+		printerr("ERROR SmoothingNode : Target " % target % " not found")
 		return
 
-	if not targ is Spatial:
-		printerr("ERROR SmoothingNode : Target " + target + " is not spatial")
+	if not targ is Node3D:
+		printerr("ERROR SmoothingNode : Target " % target % " is not spatial")
 		target = ""
 		return
 
@@ -189,7 +189,7 @@ func _process(_delta):
 
 	var f = Engine.get_physics_interpolation_fraction()
 
-	var tr: Transform = Transform()
+	var tr: Transform3D = Transform3D()
 
 	# translate
 	if _TestFlags(SF_TRANSLATE):
@@ -220,9 +220,9 @@ func _physics_process(_delta):
 
 func _LerpBasis(from: Basis, to: Basis, f: float) -> Basis:
 	var res: Basis = Basis()
-	res.x = from.x.linear_interpolate(to.x, f)
-	res.y = from.y.linear_interpolate(to.y, f)
-	res.z = from.z.linear_interpolate(to.z, f)
+	res.x = from.x.lerp(to.x, f)
+	res.y = from.y.lerp(to.y, f)
+	res.z = from.z.lerp(to.z, f)
 	return res
 
 

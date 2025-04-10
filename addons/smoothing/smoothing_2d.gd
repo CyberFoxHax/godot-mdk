@@ -20,7 +20,7 @@
 
 extends Node2D
 
-export (NodePath) var target: NodePath setget set_target, get_target
+@export var target: NodePath: get = get_target, set = set_target
 
 var _m_Target: Node2D
 
@@ -42,7 +42,7 @@ const SF_GLOBAL_OUT = 1 << 5
 const SF_DIRTY = 1 << 6
 const SF_INVISIBLE = 1 << 7
 
-export (int, FLAGS, "enabled", "translate", "rotate", "scale", "global in", "global out") var flags: int = SF_ENABLED | SF_TRANSLATE setget _set_flags, _get_flags
+@export var flags: int = SF_ENABLED | SF_TRANSLATE: get = _get_flags, set = _set_flags # (int, FLAGS, "enabled", "translate", "rotate", "scale", "global in", "global out")
 
 ##########################################################################################
 # USER FUNCS
@@ -229,7 +229,7 @@ func _process(_delta):
 	if _TestFlags(SF_GLOBAL_OUT):
 		# translate
 		if _TestFlags(SF_TRANSLATE):
-			set_global_position(m_Pos_prev.linear_interpolate(m_Pos_curr, f))
+			set_global_position(m_Pos_prev.lerp(m_Pos_curr, f))
 
 		# rotate
 		if _TestFlags(SF_ROTATE):
@@ -237,11 +237,11 @@ func _process(_delta):
 			set_global_rotation(r)
 
 		if _TestFlags(SF_SCALE):
-			set_global_scale(m_Scale_prev.linear_interpolate(m_Scale_curr, f))
+			set_global_scale(m_Scale_prev.lerp(m_Scale_curr, f))
 	else:
 		# translate
 		if _TestFlags(SF_TRANSLATE):
-			set_position(m_Pos_prev.linear_interpolate(m_Pos_curr, f))
+			set_position(m_Pos_prev.lerp(m_Pos_curr, f))
 
 		# rotate
 		if _TestFlags(SF_ROTATE):
@@ -249,7 +249,7 @@ func _process(_delta):
 			set_rotation(r)
 
 		if _TestFlags(SF_SCALE):
-			set_scale(m_Scale_prev.linear_interpolate(m_Scale_curr, f))
+			set_scale(m_Scale_prev.lerp(m_Scale_curr, f))
 
 	pass
 

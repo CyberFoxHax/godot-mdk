@@ -198,11 +198,11 @@ class BinResource:
 
 
 ## Loads a WAV stream.
-func parse_wav(bytes: PoolByteArray) -> AudioStreamSample:
+func parse_wav(bytes: PackedByteArray) -> AudioStreamWAV:
 	# Function adapted from <https://github.com/Gianclgar/GDScriptAudioImport/blob/master/GDScriptAudioImport.gd>.
 	# Thanks GiancIgar!
 	#print("========")
-	var new_stream := AudioStreamSample.new()
+	var new_stream := AudioStreamWAV.new()
 
 	for i in 100:
 		var those4bytes := str(char(bytes[i]) + char(bytes[i + 1]) + char(bytes[i + 2]) + char(bytes[i + 3]))
@@ -268,7 +268,7 @@ func parse_wav(bytes: PoolByteArray) -> AudioStreamSample:
 			var data_entry_point: int = i + 8
 			#print("Audio data starts at byte %d." % data_entry_point)
 
-			new_stream.data = bytes.subarray(data_entry_point, data_entry_point + audio_data_size - 1)
+			new_stream.data = bytes.slice(data_entry_point, data_entry_point + audio_data_size - 1)
 
 	# Get samples and set loop end.
 	# warning-ignore:integer_division
@@ -281,8 +281,8 @@ func parse_wav(bytes: PoolByteArray) -> AudioStreamSample:
 
 
 ## Converts a MDK byte array to an ImageTexture.
-func parse_texture(p_name: String, bytes: PoolByteArray) -> ImageTexture:
-	var first_4_bytes := bytes.subarray(0, 3) as PoolByteArray
+func parse_texture(p_name: String, bytes: PackedByteArray) -> ImageTexture:
+	var first_4_bytes := bytes.slice(0, 3) as PackedByteArray
 
 	# Interpret image width and height as 16-bit unsigned integers.
 	# Can't use `<<` here for some reason.
@@ -293,14 +293,14 @@ func parse_texture(p_name: String, bytes: PoolByteArray) -> ImageTexture:
 		width = 256
 		height = 256
 
-	var image_data := bytes.subarray(4, -1) as PoolByteArray
+	var image_data := bytes.slice(4, -1) as PackedByteArray
 	var image := Image.new()
 	# Create image in L8 then convert it to RGBA. This way, we can apply our own
 	# palette conversion more easily.
 	image.create_from_data(width, height, false, Image.FORMAT_L8, image_data)
 	image.convert(Image.FORMAT_RGBA8)
 
-	image.lock()
+	false # image.lock() # TODOConverter3To4, Image no longer requires locking, `false` helps to not break one line if/else, so it can freely be removed
 
 	for y in image.get_height():
 		for x in image.get_width():
@@ -308,7 +308,7 @@ func parse_texture(p_name: String, bytes: PoolByteArray) -> ImageTexture:
 				if image.get_pixel(x, y) == Color8(index, index, index):
 					image.set_pixel(x, y, MDKData.COLOR_PALETTE[index])
 
-	image.unlock()
+	false # image.unlock() # TODOConverter3To4, Image no longer requires locking, `false` helps to not break one line if/else, so it can freely be removed
 
 	var texture := ImageTexture.new()
 	texture.create_from_image(image)
@@ -320,10 +320,9 @@ func parse_texture(p_name: String, bytes: PoolByteArray) -> ImageTexture:
 
 ## Loads a MDK `.BNI` file.
 func read_textures(path: String) -> void:
-	var file := File.new()
-	var err := file.open(data_dir.plus_file(path), File.READ)
-	if err != OK:
-		OS.alert("Couldn't open file at path \"%s\" (error code %d)." % [data_dir.plus_file(path), err])
+	var file := FileAccess.open(data_dir.path_join(path), FileAccess.READ)
+	if file==null:
+		OS.alert("Couldn't open file at path \"%s\" (error code %d)." % [data_dir.path_join(path), error_string(FileAccess.get_open_error())])
 		get_tree().quit(1)
 
 
@@ -357,10 +356,9 @@ func read_textures(path: String) -> void:
 
 ## Loads a MDK `.SNI` file.
 func read_sounds(path: String) -> void:
-	var file := File.new()
-	var err := file.open(data_dir.plus_file(path), File.READ)
-	if err != OK:
-		OS.alert("Couldn't open file at path \"%s\" (error code %d)." % [data_dir.plus_file(path), err])
+	var file := FileAccess.open(data_dir.path_join(path), FileAccess.READ)
+	if file == null:
+		OS.alert("Couldn't open file at path \"%s\" (error code %d)." % [data_dir.path_join(path), error_string(FileAccess.get_open_error())])
 		get_tree().quit(1)
 
 	var _archive_size := file.get_32() + 4
@@ -390,7 +388,6 @@ func read_sounds(path: String) -> void:
 
 
 func _ready() -> void:
-	var directory := Directory.new()
 	# Try various directories to sidestep case sensitivity issues
 	# and allow using the GOG version out of the box.
 	# Prefer the most "local" directories first for easier development.
@@ -401,16 +398,19 @@ func _ready() -> void:
 		"res://mdk",
 		# Windows GOG path.
 		"C:/GOG Games/MDK",
+		"D:/Projects/mdk/MDK-Game",
 		# Windows GOG path (via WINE).
-		OS.get_environment("HOME").plus_file(".wine/drive_c/GOG Games/MDK"),
+		OS.get_environment("HOME").path_join(".wine/drive_c/GOG Games/MDK"),
+		OS.get_executable_path().get_base_dir(),
+		OS.get_executable_path().get_base_dir().path_join("MDK")
 	]
 	for try_dir in try_dirs:
 		print("Trying path: %s" % ProjectSettings.globalize_path(try_dir))
-		if directory.dir_exists(try_dir):
+		if DirAccess.dir_exists_absolute(try_dir):
 			data_dir = try_dir
 			break
 
-	if not data_dir.empty():
+	if not data_dir.is_empty():
 		print("Using MDK installation folder: %s" % ProjectSettings.globalize_path(data_dir))
 	else:
 		OS.alert("Couldn't find a MDK installation folder! You need the full version of MDK from GOG or Steam to play.\nIt can be installed in the default location or copied in the Godot project folder as \"mdk\".")
@@ -446,9 +446,8 @@ func _ready() -> void:
 func save_bytes_to_disk(byte_name: String) -> void:
 	assert(byte_name in byte_arrays, '"%s" is not in the list of MDK byte arrays.' % byte_name)
 
-	var file := File.new()
+	var file := FileAccess.open("user://%s.bin" % byte_name, FileAccess.WRITE)
 	# warning-ignore:return_value_discarded
-	file.open("user://%s.bin" % byte_name, File.WRITE)
 	file.store_buffer(MDKData.byte_arrays[byte_name])
 	file.close()
 	print('MDKData: Saved byte array %s to "user://%s.bin".' % [byte_name, byte_name])

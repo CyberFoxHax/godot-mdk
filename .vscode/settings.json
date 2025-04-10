@@ -1,0 +1,6 @@
+{
+    "godot_tools.gdscript_lsp_server_port": 6005,
+    "files.exclude": {
+        "**/*.uid": true,
+    }
+}
