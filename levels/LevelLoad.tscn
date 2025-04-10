@@ -1,9 +1,29 @@
-[gd_scene load_steps=2 format=3 uid="uid://dkto6v631k2pe"]
+[gd_scene load_steps=8 format=3 uid="uid://dkto6v631k2pe"]
 
 [ext_resource type="Script" uid="uid://dpyveylxifg4d" path="res://levels/level_load.gd" id="1_1ocvx"]
+[ext_resource type="Shader" uid="uid://c3klv5gq42i17" path="res://shaders/MDKTextureConverter.gdshader" id="2_a28o7"]
+[ext_resource type="Shader" uid="uid://ype5tgy8c7c2" path="res://shaders/Sky.gdshader" id="3_jrfhj"]
+[ext_resource type="Texture2D" uid="uid://cj6xp0gtqdrde" path="res://black.png" id="4_l2661"]
 
-[node name="LevelLoad" type="Node3D"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_l2661"]
+shader = ExtResource("3_jrfhj")
+shader_parameter/tex = ExtResource("4_l2661")
+shader_parameter/rotation = 1.57
+shader_parameter/tile = Vector2(2, 3)
+shader_parameter/offset = Vector2(0, -0.505)
+
+[sub_resource type="Sky" id="Sky_6quei"]
+sky_material = SubResource("ShaderMaterial_l2661")
+
+[sub_resource type="Environment" id="Environment_m6ke4"]
+background_mode = 2
+background_color = Color(0.352535, 0.300253, 0.659853, 1)
+sky = SubResource("Sky_6quei")
+
+[node name="LevelLoad" type="Node3D" node_paths=PackedStringArray("enviroment")]
 script = ExtResource("1_1ocvx")
+parser_shader = ExtResource("2_a28o7")
+enviroment = NodePath("WorldEnvironment")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 10, 0)
@@ -14,3 +34,6 @@ transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 10,
 visible = false
 offset_right = 367.0
 offset_bottom = 479.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_m6ke4")
