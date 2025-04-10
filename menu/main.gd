@@ -10,7 +10,7 @@ signal options_pressed
 func _on_NewGame_pressed() -> void:
 	visible = false
 	emit_signal("new_game_pressed")
-	var level := preload("res://levels/3.tscn").instance()
+	var level := preload("res://levels/3.tscn").instantiate()
 	add_child(level)
 
 

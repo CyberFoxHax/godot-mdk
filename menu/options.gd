@@ -4,7 +4,7 @@ extends Control
 
 signal back_pressed
 
-onready var skill_button := $VBoxContainer/Skill as Button
+@onready var skill_button := $VBoxContainer/Skill as Button
 
 
 func _ready() -> void:
@@ -13,7 +13,8 @@ func _ready() -> void:
 
 ## Updates the skill button text to match the skill level from the settings.
 func update_skill_text() -> void:
-	skill_button.text = "Skill - %s" % Game.SKILL_NAMES[Game.skill]
+	#skill_button.text = "Skill - %s" % Game.SKILL_NAMES[Game.skill]
+	pass
 
 
 func _on_Sound_pressed() -> void:
@@ -28,9 +29,9 @@ func _on_Controls_pressed() -> void:
 
 func _on_Skill_pressed() -> void:
 	# Cycle through skill levels.
-	Game.skill = (Game.skill + 1) % Game.Skill.size()
+	#Game.skill = (Game.skill + 1) % Game.Skill.size()
 	update_skill_text()
-	Settings.set_value("game", "skill", Game.skill)
+	#Settings.set_value("game", "skill", Game.skill)
 
 
 func _on_Display_pressed() -> void:

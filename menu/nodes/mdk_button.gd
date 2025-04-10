@@ -7,4 +7,5 @@ class_name MDKButton
 
 ## Called when the button is pressed.
 func _pressed():
-	Sound.play(self, MDKData.audio_samples["OPTBUTT"])
+	#Sound.play(self, MDKData.audio_samples["OPTBUTT"])
+	pass

@@ -6,12 +6,12 @@ extends Control
 ## If `false`, the player is in the in-game menu (pause menu).
 var in_main_menu := true
 
-onready var main := $Main as Control
+@onready var main := $Main as Control
 
 
 func _ready() -> void:
 	for node in get_tree().get_nodes_in_group("autofocus"):
-		node.connect("visibility_changed", self, "_on_autofocus_visibility_changed", [node])
+		node.connect("visibility_changed", Callable(self, "_on_autofocus_visibility_changed").bind(node))
 
 
 func _input(event: InputEvent) -> void:

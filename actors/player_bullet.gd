@@ -1,4 +1,4 @@
-extends CPUParticles
+extends CPUParticles3D
 
 # Should match the effect's particle lifetime in seconds.
 const LIFETIME = 1.0
