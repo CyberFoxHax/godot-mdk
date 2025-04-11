@@ -2,6 +2,18 @@ extends Node3D
 
 const BASE_PATH := "D:/Projects/mdk/MDK-Game"
 
+@export var unit_scale: float = 1
+@export var level: Levels = Levels.TRAVERSE7
+
+enum Levels{
+	TRAVERSE3,
+	TRAVERSE4,
+	TRAVERSE5,
+	TRAVERSE6,
+	TRAVERSE7,
+	TRAVERSE8
+}
+
 @export var parser_shader:Shader
 @export var enviroment: WorldEnvironment
 @export var material_texture: Material
@@ -103,9 +115,9 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 		arrays[ArrayMesh.ARRAY_VERTEX] = vertices
 		arrays[ArrayMesh.ARRAY_TEX_UV] = uvs
 		for poly in submesh:
-			vertices.append(Vector3(-mdkmesh.vertices[poly.v1].x, mdkmesh.vertices[poly.v1].z, mdkmesh.vertices[poly.v1].y))
-			vertices.append(Vector3(-mdkmesh.vertices[poly.v2].x, mdkmesh.vertices[poly.v2].z, mdkmesh.vertices[poly.v2].y))
-			vertices.append(Vector3(-mdkmesh.vertices[poly.v3].x, mdkmesh.vertices[poly.v3].z, mdkmesh.vertices[poly.v3].y))
+			vertices.append(Vector3(-mdkmesh.vertices[poly.v1].x, mdkmesh.vertices[poly.v1].z, mdkmesh.vertices[poly.v1].y)*unit_scale)
+			vertices.append(Vector3(-mdkmesh.vertices[poly.v2].x, mdkmesh.vertices[poly.v2].z, mdkmesh.vertices[poly.v2].y)*unit_scale)
+			vertices.append(Vector3(-mdkmesh.vertices[poly.v3].x, mdkmesh.vertices[poly.v3].z, mdkmesh.vertices[poly.v3].y)*unit_scale)
 			if materials_map.has(poly.flags):
 				var tex: Texture2D = materials_map[poly.flags]
 				var tex_size := Vector2(tex.get_width(), tex.get_height())
@@ -138,20 +150,34 @@ var files := MDKFiles.new()
 var skybox: Texture2D
 
 func create_material(flags: int, materials_map: Dictionary[int, Texture2D]) -> StandardMaterial3D:
-	if flags == 0:
-		return material_black;	
-	elif flags >= -255 and flags <= -1:
+	if flags >= -255 and flags <= -1: # simple color
 		var material := material_texture.duplicate()
 		if -flags < palette.size():
 			material.albedo_color = palette[-flags]
 		return material
-	elif flags >= 0 and flags <= 255:
+	elif flags >= 0 and flags <= 255: # standard textured
 		var material := material_texture.duplicate()
 		if materials_map.has(flags):
 			material.albedo_texture = materials_map[flags]
 		else:
-			push_error("Material key not found: %d" % flags)
+			return material_black
 		return material
+	elif flags >= -1027 && flags <= -1024: # transparent color
+		var v = -flags - 1024
+		var transparent_color = files.dti.meta_data.transparency_colors[v];
+		var material := material_transparent.duplicate()
+		material.albedo_color = transparent_color;
+		return material;
+	elif flags == -1028:
+		# wobble effect for under water stuff???
+		print("Wobble effect");
+		return null
+	elif flags < -1028:
+		# no idea
+		print("Less than -1028");
+		return null
+	else:
+		push_error("Uknown flag: %d" % flags)
 	return null
 
 func _ready() -> void:
