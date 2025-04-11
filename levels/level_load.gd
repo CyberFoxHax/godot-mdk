@@ -36,6 +36,8 @@ func create_texture(image: MDKImage) -> ImageTexture:
 	await RenderingServer.frame_post_draw
 	
 	var img = texturesConvertViewport.get_texture().get_image()
+
+	beforeTexture.blit_rect(
 	var texture = ImageTexture.create_from_image(img)
 	
 	_textures.append(texture)
