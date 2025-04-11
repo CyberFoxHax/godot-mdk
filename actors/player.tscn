@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://b74fpcybwy21o"]
 
-[ext_resource type="Script" uid="uid://va41s84tur56" path="res://addons/smoothing/smoothing.gd" id="1"]
 [ext_resource type="Script" uid="uid://cj4v4v5q52apj" path="res://actors/player.gd" id="2"]
+[ext_resource type="PackedScene" path="res://actors/player_bullet.tscn" id="2_1yqc4"]
 [ext_resource type="PackedScene" uid="uid://3a6dbpy4w7a0" path="res://hud/hud.tscn" id="3"]
 
 [sub_resource type="BoxMesh" id="1"]
@@ -13,10 +13,9 @@ size = Vector3(2, 3.2, 2)
 [node name="Player" type="Node3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
 script = ExtResource("2")
+bullet_scene = ExtResource("2_1yqc4")
 
 [node name="Smoothing" type="Node3D" parent="."]
-script = ExtResource("1")
-target = NodePath("../CharacterBody3D")
 
 [node name="Pivot" type="Node3D" parent="Smoothing"]
 
@@ -53,5 +52,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1)
 target_position = Vector3(0, -1.7, 0)
 
 [node name="HUD" parent="." instance=ExtResource("3")]
-layout_mode = 3
-anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
