@@ -7,6 +7,8 @@ const RUN_SPEED = 2
 const JUMP_VELOCITY = 0.24
 const GRAVITY = 34
 
+@export var bullet_scene: PackedScene
+
 @onready var kinematic_body := $CharacterBody3D as CharacterBody3D
 @onready var pivot := $Smoothing/Pivot as Node3D
 @onready var camera := $Smoothing/Pivot/Camera3D as Camera3D
@@ -60,10 +62,8 @@ func _process(delta: float) -> void:
 	if not any_raycast_colliding:
 		velocity.y -= GRAVITY * delta
 
-	# warning-ignore:return_value_discarded
 	kinematic_body.set_velocity(velocity)
 	kinematic_body.move_and_slide()
-	kinematic_body.velocity
 
 	if Input.is_action_pressed("attack") and is_zero_approx(refire_timer):
 		if sniper_mode:
@@ -72,7 +72,7 @@ func _process(delta: float) -> void:
 			refire_timer = 0.133333
 
 		if hitscan_raycast.is_colliding():
-			var bullet := preload("res://actors/player_bullet.tscn").instantiate()
+			var bullet := bullet_scene.instantiate()
 			get_parent().add_child(bullet)
 			bullet.global_transform.origin = hitscan_raycast.get_collision_point()
 

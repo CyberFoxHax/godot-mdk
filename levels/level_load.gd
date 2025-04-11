@@ -2,51 +2,71 @@ extends Node3D
 
 const BASE_PATH := "D:/Projects/mdk/MDK-Game"
 
-@onready var ui_list:ItemList = $ItemList
 @export var parser_shader:Shader
 @export var enviroment: WorldEnvironment
+@export var material_texture: Material
+@export var material_black: Material
+@export var material_shiny: Material
+@export var material_transparent: Material
+
+@onready var ui_list:ItemList = $ItemList
 
 var _textures_dict: Dictionary = {}
 var _textures: Array[ImageTexture] = []
 
 static var palette: PackedColorArray = []
 
-var texturesConvertViewport: SubViewport
-var texturesConvertRect: ColorRect
-var texturesConvertMaterial:Material
+#var texturesConvertViewport: SubViewport
+#var texturesConvertRect: ColorRect
+#var texturesConvertMaterial:Material
 
-func create_texture(image: MDKImage) -> ImageTexture:
+class RenderTask:
+	var viewport:SubViewport
+	var image:MDKImage
+
+func create_texture(image: MDKImage, _palette:PackedColorArray) -> RenderTask:
 	var width := image.width
 	var height := image.height
 	if width > 5000 or height > 5000:
 		return null;
-	var sw := Time.get_ticks_msec()
+
+	var texturesConvertViewport = SubViewport.new()
+	texturesConvertViewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	add_child(texturesConvertViewport)
+	var texturesConvertRect = ColorRect.new()
+	texturesConvertViewport.add_child(texturesConvertRect)
+	
+	var shader_material = ShaderMaterial.new()
+	shader_material.shader = parser_shader
+	texturesConvertRect.material = shader_material
+	var texturesConvertMaterial = shader_material
 
 	var beforeTexture = Image.create(width, height, false, Image.FORMAT_R8)
 	beforeTexture.set_data(width, height, false, Image.FORMAT_R8, image.data)
 	var beforeImage = ImageTexture.create_from_image(beforeTexture)
-
 	
 	texturesConvertViewport.size = Vector2i(width, height)
 	texturesConvertRect.size = Vector2i(width, height)
-	texturesConvertMaterial.set_shader_parameter("palette", palette)
+	texturesConvertMaterial.set_shader_parameter("palette", _palette)
 	texturesConvertMaterial.set_shader_parameter("pixels_size", Vector2(width, height))
 	texturesConvertMaterial.set_shader_parameter("pixels", beforeImage)
 	
-	await RenderingServer.frame_post_draw
+	var task := RenderTask.new()
+	task.viewport = texturesConvertViewport
+	task.image = image
+	return task
 	
-	var img = texturesConvertViewport.get_texture().get_image()
-
-	beforeTexture.blit_rect(
+func create_texture_post(task:RenderTask):
+	var img = task.viewport.get_texture().get_image()
 	var texture = ImageTexture.create_from_image(img)
 	
 	_textures.append(texture)
-	if image.name == null:
+	if task.image.name == null:
 		return texture
-	if not _textures_dict.has(image.name):
-		_textures_dict[image.name] = texture
-	ui_list.add_item(image.name, texture)
-	print("Image \"%s\" (%dx%d) loaded in %dms" % [image.name, width, height, (Time.get_ticks_msec() - sw)])
+	if not _textures_dict.has(task.image.name):
+		_textures_dict[task.image.name] = texture
+	ui_list.add_item(task.image.name, texture)
+	print("Image \"%s\" (%dx%d) loaded" % [task.image.name, task.image.width, task.image.height])
 	return texture
 
 func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
@@ -100,32 +120,42 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 		mesh.surface_set_material(submeshIndex, material_array[submeshIndex])
 		
 		submeshIndex = submeshIndex+1;
-		
 	
 	mr.mesh = mesh
 	obj.add_child(mr)
+
+	var staticbody3d = StaticBody3D.new()
+	var shape = ConcavePolygonShape3D.new()
+	shape.set_faces(mesh.get_faces())
+	var collider = CollisionShape3D.new()
+	collider.shape = shape
+	staticbody3d.add_child(collider)
+	obj.add_child(staticbody3d);
+
 	return obj
 
 var files := MDKFiles.new()
 var skybox: Texture2D
 
 func create_material(flags: int, materials_map: Dictionary[int, Texture2D]) -> StandardMaterial3D:
-	var material := StandardMaterial3D.new()
-	material.roughness = 1.0
-	material.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-	material.albedo_color = Color.WHITE
-	if flags >= -255 and flags <= -1:
+	if flags == 0:
+		return material_black;	
+	elif flags >= -255 and flags <= -1:
+		var material := material_texture.duplicate()
 		if -flags < palette.size():
 			material.albedo_color = palette[-flags]
+		return material
 	elif flags >= 0 and flags <= 255:
+		var material := material_texture.duplicate()
 		if materials_map.has(flags):
 			material.albedo_texture = materials_map[flags]
 		else:
 			push_error("Material key not found: %d" % flags)
-	
-	return material
+		return material
+	return null
 
 func _ready() -> void:
+	var sw_total := Time.get_ticks_msec()
 	var sw := Time.get_ticks_msec()
 	
 	files = MDKFiles.new()
@@ -136,17 +166,8 @@ func _ready() -> void:
 	print("Data loaded in %d ms" % (Time.get_ticks_msec() - sw))
 	sw = Time.get_ticks_msec()
 	
-	texturesConvertViewport = SubViewport.new()
-	texturesConvertViewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	add_child(texturesConvertViewport)
-	texturesConvertRect = ColorRect.new()
-	texturesConvertViewport.add_child(texturesConvertRect)
 	
-	var shader_material = ShaderMaterial.new()
-	shader_material.shader = parser_shader
-	texturesConvertRect.material = shader_material
-	texturesConvertMaterial = shader_material
-	
+	var viewports: Array[RenderTask] = []
 
 	for loc in files.o_mto.room_locations:
 		if loc.name == "DANT_8":
@@ -155,11 +176,26 @@ func _ready() -> void:
 		for i in room.palette.size():
 			palette[i + 64] = room.palette[i]
 		for sss in room.mti_items:
-			await create_texture(sss.image)
+			viewports.append(create_texture(sss.image, palette.duplicate()))
 	
 	for item in files.s_mti.entries:
 		if item.image != null:
-			await create_texture(item.image)
+			viewports.append(create_texture(item.image, palette))
+
+	var skybox_task := create_texture(files.dti.skybox_image, palette)
+
+	await RenderingServer.frame_post_draw
+
+	skybox = create_texture_post(skybox_task);
+	skybox_task.viewport.queue_free()
+	enviroment.environment.sky.sky_material.set_shader_parameter("tex", skybox);
+
+	print("Images loaded in %d ms" % (Time.get_ticks_msec() - sw))
+	sw = Time.get_ticks_msec()
+
+	for port in viewports:
+		create_texture_post(port)
+		port.viewport.queue_free()
 
 	for loc in files.o_mto.room_locations:
 		if loc.name == "DANT_8":
@@ -172,13 +208,7 @@ func _ready() -> void:
 			continue
 		create_mesh(file.mesh, file.name)
 	
-	skybox = await create_texture(files.dti.skybox_image)
-	enviroment.environment.sky.sky_material.set_shader_parameter("tex", skybox);
-	#skybox.set("filter_mode", Texture2D.FILTER_BILINEAR)
-	#skybox.set("wrap_mode_u", Texture2D.WRAP_REPEAT)
-	#skybox.set("wrap_mode_v", Texture2D.WRAP_CLAMP)
-	#RenderingServer.global_shader_parameter_set("skybox", skybox)
 	
-	texturesConvertViewport.queue_free()
 	
 	print("Level constructed in %d ms" % (Time.get_ticks_msec() - sw))
+	print("Total loading time %d ms" % (Time.get_ticks_msec() - sw_total))

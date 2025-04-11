@@ -1,9 +1,12 @@
-[gd_scene load_steps=8 format=3 uid="uid://dkto6v631k2pe"]
+[gd_scene load_steps=11 format=3 uid="uid://dkto6v631k2pe"]
 
 [ext_resource type="Script" uid="uid://dpyveylxifg4d" path="res://levels/level_load.gd" id="1_1ocvx"]
 [ext_resource type="Shader" uid="uid://c3klv5gq42i17" path="res://shaders/MDKTextureConverter.gdshader" id="2_a28o7"]
 [ext_resource type="Shader" uid="uid://ype5tgy8c7c2" path="res://shaders/Sky.gdshader" id="3_jrfhj"]
+[ext_resource type="Material" uid="uid://cjnwgsmq1waj7" path="res://shaders/texturematerial.tres" id="3_m6ke4"]
 [ext_resource type="Texture2D" uid="uid://cj6xp0gtqdrde" path="res://black.png" id="4_l2661"]
+[ext_resource type="Material" uid="uid://b32x015ary8uc" path="res://shaders/black.tres" id="4_uovlw"]
+[ext_resource type="PackedScene" uid="uid://b74fpcybwy21o" path="res://actors/player.tscn" id="7_uovlw"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_l2661"]
 shader = ExtResource("3_jrfhj")
@@ -24,9 +27,8 @@ sky = SubResource("Sky_6quei")
 script = ExtResource("1_1ocvx")
 parser_shader = ExtResource("2_a28o7")
 enviroment = NodePath("WorldEnvironment")
-
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 10, 0)
+material_texture = ExtResource("3_m6ke4")
+material_black = ExtResource("4_uovlw")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 
@@ -37,3 +39,6 @@ offset_bottom = 479.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_m6ke4")
+
+[node name="Player" parent="." instance=ExtResource("7_uovlw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
