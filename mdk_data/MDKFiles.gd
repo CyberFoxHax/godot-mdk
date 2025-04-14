@@ -8,12 +8,53 @@ var o_sni: SNIFile
 var s_mti: MTIFile
 var s_sni: SNIFile
 
-func load_level(base_path: String, level: String) -> void:
-	var path := base_path.path_join("TRAVERSE").path_join(level)
-	
-	# Define file paths
-	var file_paths := {
+# Define data types for each file
+var data_types := {
+	"fti": FTIFile,
+	"cmi": CMIFile,
+	"dti": DTIFile,
+	"o_mto": MTOFile,
+	"o_sni": SNIFile,
+	"s_mti": MTIFile,
+	"s_sni": SNIFile,
+	"bni": null
+}
+
+func load_globals(base_path: String):
+	var file_paths:Dictionary[String, String] = {
 		"fti": base_path.path_join("MISC").path_join("mdkfont.fti"),
+	}
+	var results = start_load_thread(file_paths);
+
+	pass
+
+func load_fall3d(base_path: String, level: int):
+	var path := base_path.path_join("FALL3D")
+	var file_paths:Dictionary[String, String] = {
+		"bni": path.path_join("FALL3D.BNI"),
+		"s_sni": path.path_join("FALL3D.SNI"),
+		"o_mti": path.path_join("FALL3D_%d.MTI"%level)
+	}
+	var results = start_load_thread(file_paths);
+
+	pass
+
+func load_stream(base_path: String, level: String):
+	var path := base_path.path_join("STREAM")
+	var file_paths:Dictionary[String, String] = {
+		"bni": path.path_join("STREAM.BNI"),
+		"s_mti": path.path_join("STREAM.MTI"),
+	}
+	var results = start_load_thread(file_paths);
+
+	pass
+
+
+func load_traverse(base_path: String, level: String) -> bool:
+	var path := base_path.path_join("TRAVERSE").path_join(level)
+
+	# Define file paths
+	var file_paths:Dictionary[String, String] = {
 		"cmi": path.path_join(level + ".CMI"),
 		"dti": path.path_join(level + ".DTI"),
 		"o_mto": path.path_join(level + "O.MTO"),
@@ -22,42 +63,47 @@ func load_level(base_path: String, level: String) -> void:
 		"s_sni": path.path_join(level + "S.SNI")
 	}
 	
-	# Define data types for each file
-	var data_types := {
-		"fti": FTIFile,
-		"cmi": CMIFile,
-		"dti": DTIFile,
-		"o_mto": MTOFile,
-		"o_sni": SNIFile,
-		"s_mti": MTIFile,
-		"s_sni": SNIFile
-	}
 	
-	# Dictionary to store threads and their results
-	var threads := {}
-	var results := {}
-	
-	# Start a thread for each file
-	for key in file_paths:
-		var thread := Thread.new()
-		threads[key] = thread
-		thread.start(load_file.bind(file_paths[key], data_types[key], results, key))
-	
-	# Wait for all threads to complete
-	for key in threads:
-		var thread: Thread = threads[key]
-		thread.wait_to_finish()
+	var results = start_load_thread(file_paths);
 	
 	# Assign results to class variables
-	fti = results["fti"]
-	cmi = results["cmi"]
-	dti = results["dti"]
-	o_mto = results["o_mto"]
-	o_sni = results["o_sni"]
-	s_mti = results["s_mti"]
-	s_sni = results["s_sni"]
+	cmi = results.pop_front()
+	dti = results.pop_front()
+	o_mto = results.pop_front()
+	o_sni = results.pop_front()
+	s_mti = results.pop_front()
+	s_sni = results.pop_front()
 
-func load_file(path: String, data_type: GDScript, results: Dictionary, result_key: String) -> void:
+	return true
+
+func start_load_thread(file_paths:Dictionary[String, String]) -> Array[Object]:
+	for key in file_paths:
+		if FileAccess.file_exists(file_paths[key]) == false:
+			assert(false, "Path not found: %s" % file_paths[key])
+
+	# Dictionary to store threads and their results
+	var threads:Array[Thread]= []
+	var results:Array[Object]= []
+	var files_count = len(file_paths)
+	threads.resize(files_count)
+	results.resize(files_count)
+	
+	# Start a thread for each file
+	var i=0;
+	for key in file_paths:
+		var thread := Thread.new()
+		threads[i] = thread
+		thread.start(load_file.bind(file_paths[key], data_types[key], results, i))
+		i=i+1
+	
+	# Wait for all threads to complete
+	for key in len(threads):
+		var thread: Thread = threads[key]
+		thread.wait_to_finish()
+
+	return results
+
+func load_file(path: String, data_type: GDScript, results: Array[Object], result_key: int) -> void:
 	var file := FileAccess.open(path, FileAccess.READ)
 	var buffer := file.get_buffer(file.get_length())
 	var byteBuffer = ByteBuffer.new(buffer)
