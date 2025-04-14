@@ -3,16 +3,18 @@
 extends Node3D
 
 const MOUSE_SENSITIVITY = 0.002
-const RUN_SPEED = 2
-const JUMP_VELOCITY = 0.24
-const GRAVITY = 34
+const RUN_SPEED = 8
+const JUMP_VELOCITY = 0.7
+const GRAVITY = 80
 
 @export var bullet_scene: PackedScene
 
+
+@onready var player_model := $MeshInstance3D as Node3D
 @onready var kinematic_body := $CharacterBody3D as CharacterBody3D
-@onready var pivot := $Smoothing/Pivot as Node3D
-@onready var camera := $Smoothing/Pivot/Camera3D as Camera3D
-@onready var hitscan_raycast := $Smoothing/Pivot/HitscanRayCast as RayCast3D
+@onready var pivot := $Pivot as Node3D
+@onready var camera := $Pivot/Camera3D as Camera3D
+@onready var hitscan_raycast := $Pivot/HitscanRayCast as RayCast3D
 @onready var raycast_nw := $CharacterBody3D/RayCastNW as RayCast3D
 @onready var raycast_ne := $CharacterBody3D/RayCastNE as RayCast3D
 @onready var raycast_sw := $CharacterBody3D/RayCastSW as RayCast3D
@@ -32,6 +34,8 @@ var refire_timer := 0.0
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	pivot.rotation = rotation
+	rotation = Vector3()
 
 
 func _process(delta: float) -> void:
@@ -46,8 +50,8 @@ func _process(delta: float) -> void:
 	# Player can't move while in sniper mode, as in the original game.
 	if not sniper_mode:
 		velocity += (
-				pivot.transform.basis.x * (Input.get_action_strength("move_right") - Input.get_action_strength("move_left")) * RUN_SPEED +
-				pivot.transform.basis.z * (Input.get_action_strength("move_backward") - Input.get_action_strength("move_forward")) * RUN_SPEED
+			pivot.transform.basis.x * (Input.get_action_strength("move_right") - Input.get_action_strength("move_left")) * RUN_SPEED +
+			pivot.transform.basis.z * (Input.get_action_strength("move_backward") - Input.get_action_strength("move_forward")) * RUN_SPEED
 		)
 
 	var any_raycast_colliding := is_any_raycast_colliding()
@@ -75,6 +79,8 @@ func _process(delta: float) -> void:
 			var bullet := bullet_scene.instantiate()
 			get_parent().add_child(bullet)
 			bullet.global_transform.origin = hitscan_raycast.get_collision_point()
+	pivot.position = pivot.position.lerp(kinematic_body.position, 20*delta)
+	player_model.position = player_model.position.lerp(kinematic_body.position, 50*delta)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:

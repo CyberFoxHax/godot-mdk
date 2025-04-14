@@ -3,15 +3,15 @@ extends Node3D
 const BASE_PATH := "D:/Projects/mdk/MDK-Game"
 
 @export var unit_scale: float = 1
-@export var level: Levels = Levels.TRAVERSE7
+@export var level: Levels = Levels.LEVEL7
 
 enum Levels{
-	TRAVERSE3,
-	TRAVERSE4,
-	TRAVERSE5,
-	TRAVERSE6,
-	TRAVERSE7,
-	TRAVERSE8
+	LEVEL3,
+	LEVEL4,
+	LEVEL5,
+	LEVEL6,
+	LEVEL7,
+	LEVEL8
 }
 
 @export var parser_shader:Shader
@@ -144,6 +144,9 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 	staticbody3d.add_child(collider)
 	obj.add_child(staticbody3d);
 
+	var save_path = "res://LEVEL7/%s.tres" % _name
+	ResourceSaver.save(mr.mesh, save_path)
+
 	return obj
 
 var files := MDKFiles.new()
@@ -185,7 +188,10 @@ func _ready() -> void:
 	var sw := Time.get_ticks_msec()
 	
 	files = MDKFiles.new()
-	files.load_level(BASE_PATH, "LEVEL7")
+	if files.load_traverse(BASE_PATH, Levels.keys()[level]) == false:
+		print("failed to load level %s" % Levels.keys()[level])
+		return
+
 	palette.resize(files.dti.palette.size())
 	for i in range(files.dti.palette.size()):
 		palette[i] = files.dti.palette[i]
