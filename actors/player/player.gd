@@ -31,6 +31,8 @@ var sniper_mode := false: set = set_sniper_mode
 ## (they can just hold down the fire button).
 var refire_timer := 0.0
 
+var camera_speed:Vector2;
+
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -45,6 +47,10 @@ func _process(delta: float) -> void:
 	velocity.x *= 1 - 10 * delta
 	velocity.y *= 1 - 0.5 * delta
 	velocity.z *= 1 - 10 * delta
+
+	# emulate MDK's weird camera
+	camera_speed *= delta*12
+	camera.rotation.z = lerp(camera.rotation.z,-camera_speed.x/100, 0.1);
 
 	# Apply movement keys.
 	# Player can't move while in sniper mode, as in the original game.
@@ -81,11 +87,20 @@ func _process(delta: float) -> void:
 			bullet.global_transform.origin = hitscan_raycast.get_collision_point()
 	pivot.position = pivot.position.lerp(kinematic_body.position, 20*delta)
 	player_model.position = player_model.position.lerp(kinematic_body.position, 50*delta)
+	
+	var direction = player_model.global_position - camera.global_position
+	direction = direction.normalized()
+
+	var angle = atan2(direction.x, direction.z)
+	player_model.rotation = Vector3(0, angle+PI, camera.rotation.z)
+
+	
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 			pivot.rotate(Vector3.UP, -event.relative.x * MOUSE_SENSITIVITY)
+			camera_speed += event.relative
 
 	if event.is_action_pressed("toggle_sniper_mode"):
 		self.sniper_mode = not sniper_mode
