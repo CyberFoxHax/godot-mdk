@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://dbbbp6wq5mi3d"]
+
+[ext_resource type="Shader" uid="uid://do8x4vx02jybm" path="res://shaders/sprite.gdshader" id="1_jfqxp"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_jfqxp")
+shader_parameter/pixels_size = Vector2(0, 0)

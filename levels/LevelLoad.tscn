@@ -1,20 +1,20 @@
-[gd_scene load_steps=12 format=3 uid="uid://dkto6v631k2pe"]
+[gd_scene load_steps=13 format=3 uid="uid://dkto6v631k2pe"]
 
 [ext_resource type="Script" uid="uid://dpyveylxifg4d" path="res://levels/level_load.gd" id="1_1ocvx"]
 [ext_resource type="Shader" uid="uid://c3klv5gq42i17" path="res://shaders/MDKTextureConverter.gdshader" id="2_a28o7"]
+[ext_resource type="Material" uid="uid://dbbbp6wq5mi3d" path="res://actors/player/player_material.tres" id="2_hp56d"]
 [ext_resource type="Shader" uid="uid://ype5tgy8c7c2" path="res://shaders/Sky.gdshader" id="3_jrfhj"]
-[ext_resource type="Material" uid="uid://cjnwgsmq1waj7" path="res://shaders/texture_material.tres" id="3_m6ke4"]
-[ext_resource type="Texture2D" uid="uid://cj6xp0gtqdrde" path="res://black.png" id="4_l2661"]
+[ext_resource type="Shader" uid="uid://dywanqsyuw2fb" path="res://shaders/texture.gdshader" id="4_5jpsj"]
 [ext_resource type="Material" uid="uid://b32x015ary8uc" path="res://shaders/black.tres" id="4_uovlw"]
-[ext_resource type="Material" uid="uid://d2ouy3ffdnba" path="res://shaders/transparent_material.tres" id="5_hp56d"]
-[ext_resource type="PackedScene" uid="uid://b74fpcybwy21o" path="res://actors/player.tscn" id="7_uovlw"]
+[ext_resource type="Shader" uid="uid://cdkeql5hnnjga" path="res://shaders/color.gdshader" id="6_5jpsj"]
+[ext_resource type="Shader" uid="uid://d3h5qdausvsns" path="res://shaders/transparent.gdshader" id="6_hp56d"]
+[ext_resource type="PackedScene" uid="uid://b74fpcybwy21o" path="res://actors/player/player.tscn" id="7_uovlw"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_l2661"]
 shader = ExtResource("3_jrfhj")
-shader_parameter/tex = ExtResource("4_l2661")
 shader_parameter/rotation = 1.57
 shader_parameter/tile = Vector2(2, 3)
-shader_parameter/offset = Vector2(0, -0.505)
+shader_parameter/offset = Vector2(0, -0.5)
 
 [sub_resource type="Sky" id="Sky_6quei"]
 sky_material = SubResource("ShaderMaterial_l2661")
@@ -26,13 +26,16 @@ sky = SubResource("Sky_6quei")
 
 [node name="LevelLoad" type="Node3D" node_paths=PackedStringArray("enviroment")]
 script = ExtResource("1_1ocvx")
-parser_shader = ExtResource("2_a28o7")
-enviroment = NodePath("WorldEnvironment")
-material_texture = ExtResource("3_m6ke4")
+player_material = ExtResource("2_hp56d")
 material_black = ExtResource("4_uovlw")
-material_transparent = ExtResource("5_hp56d")
+enviroment = NodePath("WorldEnvironment")
+palette_parser_shader = ExtResource("2_a28o7")
+texture_shader = ExtResource("4_5jpsj")
+color_shader = ExtResource("6_5jpsj")
+transparent_shader = ExtResource("6_hp56d")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.51011, -7.62479)
 
 [node name="ItemList" type="ItemList" parent="."]
 visible = false

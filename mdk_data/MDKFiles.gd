@@ -7,9 +7,10 @@ var o_mto: MTOFile
 var o_sni: SNIFile
 var s_mti: MTIFile
 var s_sni: SNIFile
+var traverse_bni:BNIFile
 
 # Define data types for each file
-var data_types := {
+var data_types : Dictionary[String, GDScript] = {
 	"fti": FTIFile,
 	"cmi": CMIFile,
 	"dti": DTIFile,
@@ -17,7 +18,7 @@ var data_types := {
 	"o_sni": SNIFile,
 	"s_mti": MTIFile,
 	"s_sni": SNIFile,
-	"bni": null
+	"bni": BNIFile
 }
 
 func load_globals(base_path: String):
@@ -60,10 +61,14 @@ func load_traverse(base_path: String, level: String) -> bool:
 		"o_mto": path.path_join(level + "O.MTO"),
 		"o_sni": path.path_join(level + "O.SNI"),
 		"s_mti": path.path_join(level + "S.MTI"),
-		"s_sni": path.path_join(level + "S.SNI")
+		"s_sni": path.path_join(level + "S.SNI"),
+
+		"bni": base_path.path_join("TRAVERSE").path_join("TRAVSPRT.BNI")
 	}
 	
-	
+	#var pathh = base_path.path_join("TRAVERSE").path_join("TRAVSPRT.BNI");
+	#load_file(pathh, BNIFile, [null], 0)
+
 	var results = start_load_thread(file_paths);
 	
 	# Assign results to class variables
@@ -73,6 +78,7 @@ func load_traverse(base_path: String, level: String) -> bool:
 	o_sni = results.pop_front()
 	s_mti = results.pop_front()
 	s_sni = results.pop_front()
+	traverse_bni = results.pop_front()
 
 	return true
 

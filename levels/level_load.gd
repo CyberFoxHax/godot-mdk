@@ -2,6 +2,7 @@ extends Node3D
 
 const BASE_PATH := "D:/Projects/mdk/MDK-Game"
 
+
 @export var unit_scale: float = 1
 @export var level: Levels = Levels.LEVEL7
 
@@ -14,12 +15,14 @@ enum Levels{
 	LEVEL8
 }
 
-@export var parser_shader:Shader
-@export var enviroment: WorldEnvironment
-@export var material_texture: Material
+@export var player_material: ShaderMaterial
 @export var material_black: Material
-@export var material_shiny: Material
-@export var material_transparent: Material
+@export var enviroment: WorldEnvironment
+@export var palette_parser_shader: Shader
+@export var texture_shader: Shader
+@export var color_shader: Shader
+@export var shiny_shader: Shader
+@export var transparent_shader: Shader
 
 @onready var ui_list:ItemList = $ItemList
 
@@ -49,7 +52,7 @@ func create_texture(image: MDKImage, _palette:PackedColorArray) -> RenderTask:
 	texturesConvertViewport.add_child(texturesConvertRect)
 	
 	var shader_material = ShaderMaterial.new()
-	shader_material.shader = parser_shader
+	shader_material.shader = palette_parser_shader
 	texturesConvertRect.material = shader_material
 	var texturesConvertMaterial = shader_material
 
@@ -61,7 +64,7 @@ func create_texture(image: MDKImage, _palette:PackedColorArray) -> RenderTask:
 	texturesConvertRect.size = Vector2i(width, height)
 	texturesConvertMaterial.set_shader_parameter("palette", _palette)
 	texturesConvertMaterial.set_shader_parameter("pixels_size", Vector2(width, height))
-	texturesConvertMaterial.set_shader_parameter("pixels", beforeImage)
+	texturesConvertMaterial.set_shader_parameter("main_texture", beforeImage)
 	
 	var task := RenderTask.new()
 	task.viewport = texturesConvertViewport
@@ -101,7 +104,7 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 		if _textures_dict.has(item):
 			materials_map[i] = _textures_dict[item]
 	
-	var material_array :Array[StandardMaterial3D]= []
+	var material_array :Array[Material]= []
 	for flags in submeshes.keys():
 		material_array.append(create_material(flags, materials_map))
 	
@@ -144,32 +147,32 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 	staticbody3d.add_child(collider)
 	obj.add_child(staticbody3d);
 
-	var save_path = "res://LEVEL7/%s.tres" % _name
-	ResourceSaver.save(mr.mesh, save_path)
-
 	return obj
 
 var files := MDKFiles.new()
 var skybox: Texture2D
 
-func create_material(flags: int, materials_map: Dictionary[int, Texture2D]) -> StandardMaterial3D:
+func create_material(flags: int, materials_map: Dictionary[int, Texture2D]) -> Material:
 	if flags >= -255 and flags <= -1: # simple color
-		var material := material_texture.duplicate()
+		var material := ShaderMaterial.new()
+		material.shader = color_shader;
 		if -flags < palette.size():
-			material.albedo_color = palette[-flags]
+			material.set_shader_parameter("main_color", palette[-flags])
 		return material
 	elif flags >= 0 and flags <= 255: # standard textured
-		var material := material_texture.duplicate()
+		var material := ShaderMaterial.new()
+		material.shader = texture_shader;
 		if materials_map.has(flags):
-			material.albedo_texture = materials_map[flags]
+			material.set_shader_parameter("main_texture", materials_map[flags])
 		else:
 			return material_black
 		return material
 	elif flags >= -1027 && flags <= -1024: # transparent color
 		var v = -flags - 1024
 		var transparent_color = files.dti.meta_data.transparency_colors[v];
-		var material := material_transparent.duplicate()
-		material.albedo_color = transparent_color;
+		var material := ShaderMaterial.new()
+		material.shader = transparent_shader
+		material.set_shader_parameter("main_color", transparent_color);
 		return material;
 	elif flags == -1028:
 		# wobble effect for under water stuff???
@@ -191,13 +194,12 @@ func _ready() -> void:
 	if files.load_traverse(BASE_PATH, Levels.keys()[level]) == false:
 		print("failed to load level %s" % Levels.keys()[level])
 		return
+	print("Data loaded in %d ms" % (Time.get_ticks_msec() - sw))
+	sw = Time.get_ticks_msec()
 
 	palette.resize(files.dti.palette.size())
 	for i in range(files.dti.palette.size()):
 		palette[i] = files.dti.palette[i]
-	print("Data loaded in %d ms" % (Time.get_ticks_msec() - sw))
-	sw = Time.get_ticks_msec()
-	
 	
 	var viewports: Array[RenderTask] = []
 
@@ -216,11 +218,26 @@ func _ready() -> void:
 
 	var skybox_task := create_texture(files.dti.skybox_image, palette)
 
+
+	var sprites_sw = Time.get_ticks_msec()
+
+	var idle = files.traverse_bni.sprites["K_IDLE"]
+	idle.unpack()
+	var frames = idle.to_mdk_images()
+	var kurt_render = create_texture(frames[0], palette);
+	viewports.append(kurt_render)
+
+	print("Sprites unpacked %d ms" % (Time.get_ticks_msec() - sprites_sw))
+
 	await RenderingServer.frame_post_draw
 
 	skybox = create_texture_post(skybox_task);
 	skybox_task.viewport.queue_free()
-	enviroment.environment.sky.sky_material.set_shader_parameter("tex", skybox);
+	enviroment.environment.sky.sky_material.set_shader_parameter("main_texture", skybox);
+
+	player_material.set_shader_parameter("main_texture", create_texture_post(kurt_render))
+	#player_material.set_shader_parameter("pixels_size", Vector2(kurt_render.image.width, kurt_render.image.height))
+	kurt_render.viewport.queue_free()
 
 	print("Images loaded in %d ms" % (Time.get_ticks_msec() - sw))
 	sw = Time.get_ticks_msec()
@@ -243,4 +260,7 @@ func _ready() -> void:
 	
 	
 	print("Level constructed in %d ms" % (Time.get_ticks_msec() - sw))
+	sw = Time.get_ticks_msec()
+
 	print("Total loading time %d ms" % (Time.get_ticks_msec() - sw_total))
+	

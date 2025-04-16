@@ -1,11 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://b74fpcybwy21o"]
+[gd_scene load_steps=7 format=3 uid="uid://b74fpcybwy21o"]
 
-[ext_resource type="Script" uid="uid://cj4v4v5q52apj" path="res://actors/player.gd" id="2"]
+[ext_resource type="Script" uid="uid://cj4v4v5q52apj" path="res://actors/player/player.gd" id="2"]
 [ext_resource type="PackedScene" path="res://actors/player_bullet.tscn" id="2_1yqc4"]
 [ext_resource type="PackedScene" uid="uid://3a6dbpy4w7a0" path="res://hud/hud.tscn" id="3"]
+[ext_resource type="Material" uid="uid://dbbbp6wq5mi3d" path="res://actors/player/player_material.tres" id="3_lsqbn"]
 
-[sub_resource type="BoxMesh" id="1"]
-size = Vector3(2, 3.2, 2)
+[sub_resource type="QuadMesh" id="QuadMesh_1yqc4"]
 
 [sub_resource type="BoxShape3D" id="3"]
 size = Vector3(2, 3.2, 2)
@@ -24,8 +24,10 @@ near = 0.1
 target_position = Vector3(0, 0, -200)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-mesh = SubResource("1")
+transform = Transform3D(1.691, 0, 0, 0, 3.441, 0, 0, 0, 0.023, 0, 0, 0)
+mesh = SubResource("QuadMesh_1yqc4")
 skeleton = NodePath("")
+surface_material_override/0 = ExtResource("3_lsqbn")
 
 [node name="CharacterBody3D" type="CharacterBody3D" parent="."]
 
