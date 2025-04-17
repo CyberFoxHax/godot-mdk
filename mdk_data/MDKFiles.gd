@@ -21,6 +21,10 @@ var data_types : Dictionary[String, GDScript] = {
 	"bni": BNIFile
 }
 
+#convert MDK's coodinate system to Godot
+static func swizzle_vector(v:Vector3):
+	return Vector3(-v.x, v.z, v.y)
+
 func load_globals(base_path: String):
 	var file_paths:Dictionary[String, String] = {
 		"fti": base_path.path_join("MISC").path_join("mdkfont.fti"),

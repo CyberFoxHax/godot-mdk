@@ -14,9 +14,6 @@ vec3 get_frame_uv(vec2 p, int frame){
     vec4 frame_rect = frame_rects[frame];
     vec2 frame_margin = frame_margins[frame];
 
-    
-
-
     vec2 original_size = frame_rect.zw; // Store original size for masking
     float original_x_start = frame_rect.x; // Store original x offset
 
