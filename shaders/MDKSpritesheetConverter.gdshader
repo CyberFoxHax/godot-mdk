@@ -1,4 +1,4 @@
-///// Shader to apply palette to texture
+///// Shader to apply palette to texture, and replace "pink" with black alpha
 shader_type canvas_item;
 
 uniform vec4 palette[256];

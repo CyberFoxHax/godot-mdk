@@ -29,86 +29,74 @@ enum Levels{
 
 
 
-var _textures_dict: Dictionary[String, Texture2D] = {}
-var _sprites_dict: Dictionary[String, Texture2D] = {}
+var textures_dict: Dictionary[String, Texture2D] = {}
+var sprites_dict: Dictionary[String, Texture2D] = {}
 var files := MDKFiles.new()
 
 static var palette: PackedColorArray = []
 
-class RenderSpritesheetTask:
-	var viewport:SubViewport
-	var header:MDKSpriteAnimation
-	var image:MDKSpriteAnimation.SpriteEntry
-
-class RenderTextureTask:
-	var viewport:SubViewport
-	var image:MDKImage
-
-
 func create_spritesheet(spritesheet: MDKSpriteAnimation, _palette:PackedColorArray) -> Texture2D:
-	var tasks: Array[RenderSpritesheetTask] = []
-
-	for image in spritesheet._sprite_data:
-		var texturesConvertViewport = SubViewport.new()
-		texturesConvertViewport.transparent_bg = true
-		texturesConvertViewport.render_target_clear_mode = SubViewport.CLEAR_MODE_ALWAYS
-		texturesConvertViewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-		add_child(texturesConvertViewport)
-		var texturesConvertRect = ColorRect.new()
-		texturesConvertViewport.add_child(texturesConvertRect)
-		
-		var shader_material = ShaderMaterial.new()
-		shader_material.shader = spritesheet_parser_shader
-		texturesConvertRect.material = shader_material
-		var texturesConvertMaterial = shader_material
-
-		var beforeTexture = Image.create(image.width, image.height, false, Image.FORMAT_R8)
-		beforeTexture.set_data(image.width, image.height, false, Image.FORMAT_R8, image.img_data)
-		var beforeImage = ImageTexture.create_from_image(beforeTexture)
-		
-		texturesConvertViewport.size = Vector2i(image.width, image.height)
-		texturesConvertRect.size = Vector2i(image.width, image.height)
-		texturesConvertMaterial.set_shader_parameter("palette", _palette)
-		texturesConvertMaterial.set_shader_parameter("main_texture", beforeImage)
-		
-		var task := RenderSpritesheetTask.new()
-		task.viewport = texturesConvertViewport
-		task.header = spritesheet
-		task.image = image
-		tasks.append(task)
-
-	await RenderingServer.frame_post_draw
-
 	var total_width = 0
 	var total_height = 0
 	
-	for task in tasks:
-		total_width += task.image.width
-		total_height = max(total_height, task.image.height)
+	for sprite:MDKSpriteAnimation.SpriteEntry in spritesheet.images:
+		#total_width += task.image.width-task.image.x_ui_shift
+		#total_height = max(total_height, task.image.height+task.image.y_ui_shift)
+		total_width += sprite.width
+		total_height = max(total_height, sprite.height)
 
-	var total_texture = Image.create(total_width, total_height, false, Image.FORMAT_RGBA8)
-	
+	var total_texture = Image.create(total_width, total_height, false, Image.FORMAT_R8)
+
 	var offset = 0
-	for task in tasks:
-		var img = task.viewport.get_texture().get_image()
-		img.convert(Image.FORMAT_RGBA8)
-		total_texture.blit_rect(
-			img,
-			Rect2i(0,0,task.image.width,task.image.height),
-			Vector2i(offset, 0)
-		);
-		offset += task.image.width
+	for sprite:MDKSpriteAnimation.SpriteEntry in spritesheet.images:
+		var tex = Image.create(sprite.width, sprite.height, false, Image.FORMAT_R8)
+		tex.set_data(sprite.width, sprite.height, false, Image.FORMAT_R8, sprite.img_data)
 
-	var texture = ImageTexture.create_from_image(total_texture)
+		total_texture.blit_rect(
+			tex,
+			Rect2i(0, 0, sprite.width, sprite.height),
+			Vector2i(offset, 0)
+			#Vector2i(offset-v.x_ui_shift+v.width/2, -v.y_ui_shift+v.height/2)
+		);
+		offset += sprite.width
+
+	var viewport = SubViewport.new()
+	viewport.transparent_bg = true
+	viewport.render_target_clear_mode  = SubViewport.CLEAR_MODE_ALWAYS
+	viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	add_child(viewport)
+	var colorRect = ColorRect.new()
+	viewport.add_child(colorRect)
+	
+	var shader_material = ShaderMaterial.new()
+	shader_material.shader = spritesheet_parser_shader
+	colorRect.material = shader_material
+	var material = shader_material
+
+	var beforeImage = ImageTexture.create_from_image(total_texture)
+	
+	viewport.size = Vector2i(total_width, total_height)
+	colorRect.size = viewport.size
+	material.set_shader_parameter("palette", _palette)
+	material.set_shader_parameter("main_texture", beforeImage)
+
+
+	await RenderingServer.frame_post_draw
+
+
+	var newtexture = viewport.get_texture().get_image()
+
+	var texture = ImageTexture.create_from_image(newtexture)
 	if spritesheet.name == null:
 		return texture
-	if not _sprites_dict.has(spritesheet.name):
-		_sprites_dict[spritesheet.name] = texture
+	if not sprites_dict.has(spritesheet.name):
+		sprites_dict[spritesheet.name] = texture
 	ui_list.add_item(spritesheet.name, texture)
 	print("Spritesheet \"%s\" (%dx%d) loaded" % [spritesheet.name, total_width, total_height])
 
-	for v in tasks:
-		v.viewport.queue_free()
+	viewport.queue_free()
+
+	#newtexture.save_png("C:\\test.png");
 
 	return texture
 
@@ -119,43 +107,40 @@ func create_texture(image: MDKImage, _palette:PackedColorArray, _dict:Dictionary
 	if width > 5000 or height > 5000:
 		return null;
 
-	var texturesConvertViewport = SubViewport.new()
-	texturesConvertViewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-	add_child(texturesConvertViewport)
-	var texturesConvertRect = ColorRect.new()
-	texturesConvertViewport.add_child(texturesConvertRect)
+	var viewport = SubViewport.new()
+	viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	add_child(viewport)
+	var colorRect = ColorRect.new()
+	viewport.add_child(colorRect)
 	
 	var shader_material = ShaderMaterial.new()
 	shader_material.shader = palette_parser_shader
-	texturesConvertRect.material = shader_material
-	var texturesConvertMaterial = shader_material
+	colorRect.material = shader_material
 
 	var beforeTexture = Image.create(width, height, false, Image.FORMAT_R8)
 	beforeTexture.set_data(width, height, false, Image.FORMAT_R8, image.data)
 	var beforeImage = ImageTexture.create_from_image(beforeTexture)
 	
-	texturesConvertViewport.size = Vector2i(width, height)
-	texturesConvertRect.size = Vector2i(width, height)
-	texturesConvertMaterial.set_shader_parameter("palette", _palette)
-	texturesConvertMaterial.set_shader_parameter("main_texture", beforeImage)
+	viewport.size = Vector2i(width, height)
+	colorRect.size = Vector2i(width, height)
+	shader_material.set_shader_parameter("palette", _palette)
+	shader_material.set_shader_parameter("main_texture", beforeImage)
 	
-	var task := RenderTextureTask.new()
-	task.viewport = texturesConvertViewport
-	task.image = image
 
 	await RenderingServer.frame_post_draw
 
-	var img = task.viewport.get_texture().get_image()
+
+	var img = viewport.get_texture().get_image()
 	var texture = ImageTexture.create_from_image(img)
 	
-	if task.image.name == null:
+	if image.name == null:
 		return texture
-	if not _dict.has(task.image.name):
-		_dict[task.image.name] = texture
-	ui_list.add_item(task.image.name, texture)
-	print("Image \"%s\" (%dx%d) loaded" % [task.image.name, task.image.width, task.image.height])
+	if not _dict.has(image.name):
+		_dict[image.name] = texture
+	ui_list.add_item(image.name, texture)
+	print("Image \"%s\" (%dx%d) loaded" % [image.name, image.width, image.height])
 
-	task.viewport.queue_free()
+	viewport.queue_free()
 	return texture
 
 func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
@@ -175,8 +160,8 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 	var materials_map :Dictionary[int, Texture2D]= {}
 	for i in range(mdkmesh.material_names.size()):
 		var item := mdkmesh.material_names[i]
-		if _textures_dict.has(item):
-			materials_map[i] = _textures_dict[item]
+		if textures_dict.has(item):
+			materials_map[i] = textures_dict[item]
 	
 	var material_array :Array[Material]= []
 	for flags in submeshes.keys():
@@ -265,9 +250,11 @@ func _ready() -> void:
 	load_skybox()
 	load_kurt()
 
-	await RenderingServer.frame_post_draw
-
 	var sw = Time.get_ticks_msec()
+	await RenderingServer.frame_post_draw
+	print("All textures loaded %d ms" % (Time.get_ticks_msec() - sw_total))
+	sw = Time.get_ticks_msec()
+
 
 	for loc in files.o_mto.room_locations:
 		if loc.name == "DANT_8":
@@ -298,12 +285,11 @@ func load_files():
 
 
 func load_skybox():
-	var skybox := await create_texture(files.dti.skybox_image, palette, _textures_dict)
+	var skybox := await create_texture(files.dti.skybox_image, palette, textures_dict)
 	enviroment.environment.sky.sky_material.set_shader_parameter("main_texture", skybox);
 
 
 func load_textures():
-	var sw = Time.get_ticks_msec()
 	for loc in files.o_mto.room_locations:
 		if loc.name == "DANT_8":
 			continue
@@ -311,38 +297,64 @@ func load_textures():
 		for i in room.palette.size():
 			palette[i + 64] = room.palette[i]
 		for sss in room.mti_items:
-			create_texture(sss.image, palette.duplicate(), _textures_dict)
+			create_texture(sss.image, palette.duplicate(), textures_dict)
 	
 	for item in files.s_mti.entries:
 		if item.image != null:
-			create_texture(item.image, palette, _textures_dict)
+			create_texture(item.image, palette, textures_dict)
 
 	await RenderingServer.frame_post_draw
-
-	print("Images loaded in %d ms" % (Time.get_ticks_msec() - sw))
 
 
 func load_kurt():
 	var sw = Time.get_ticks_msec()
 
-	var idle = files.traverse_bni.sprites["K_IDLE"]
+	var idle = files.traverse_bni.sprites["K_RUN"]
 	idle.unpack()
 	var spritesheet = await create_spritesheet(idle, palette);
 
+	print("Kurt unpacked in %d ms" % (Time.get_ticks_msec() - sw))
+
 	player_material.set_shader_parameter("main_texture", spritesheet)
 	var rects: Array[Vector4] = [];
+	var margins: Array[Vector2] = [];
+	var spritesheet_width = float(spritesheet.get_width())
+	var spritesheet_height = float(spritesheet.get_height())
+	
+	var largest_frame = Vector2(0, 0)
 	var offset_x = 0;
-	for dat in idle._sprite_data:
+	#total_texture.blit_rect(
+	#	img,
+	#	Rect2i(0, 0, v.width, v.height),
+	#	Vector2i(offset-v.x_ui_shift+v.width/2, -v.y_ui_shift+v.height/2)
+	#);
+	#offset += v.width+v.x_ui_shift
+	for dat:MDKSpriteAnimation.SpriteEntry in idle.images:
 		var newrect = Vector4(
-			offset_x/float(spritesheet.get_width()),
+			offset_x,
 			0,
-			dat.width/float(spritesheet.get_width()),
-			1,
-			
+			dat.width,
+			dat.height
 		)
-		offset_x += dat.width
+		
+		newrect.x /= spritesheet_width;
+		newrect.y /= spritesheet_height;
+		newrect.z /= spritesheet_width;
+		newrect.w /= spritesheet_height;
+
+		offset_x += dat.width;
+		
+		var margin = Vector2(
+			float(dat.x_ui_shift)/(spritesheet_width+dat.x_ui_shift),
+			float(dat.y_ui_shift)/(spritesheet_height+dat.y_ui_shift)
+		)
+		margins.append(margin)
+
+		largest_frame.x = max(largest_frame.x, dat.width/spritesheet_width)
+		largest_frame.y = max(largest_frame.y, dat.height/spritesheet_height)
 		rects.append(newrect)
+
 	player_material.set_shader_parameter("frame_count", len(rects))
 	player_material.set_shader_parameter("frame_rects", rects)
-
-	print("Kurt loaded in %d ms" % (Time.get_ticks_msec() - sw))
+	player_material.set_shader_parameter("frame_margins", margins)
+	player_material.set_shader_parameter("largest_frame", largest_frame)
