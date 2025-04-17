@@ -10,8 +10,8 @@ var offset_roomlist: int
 var offset_palette: int
 var offset_skyboximage: int
 var meta_data: MetaData_
-var spawnpoints: Array
-var room_list_items: Array
+var spawnpoints: Array[Spawnpoint]
+var room_list_items: Array[RoomListItem]
 var palette: PackedColorArray
 var skybox_image: MDKImage
 

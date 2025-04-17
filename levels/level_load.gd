@@ -15,6 +15,53 @@ enum Levels{
 	LEVEL8
 }
 
+class CutContent:
+	func _init(mdict:Dictionary[String, bool]) -> void:
+		dict = mdict
+
+	var dict:Dictionary[String, bool]
+
+
+var cut_content:Dictionary[Levels, CutContent] = {
+	Levels.LEVEL3: CutContent.new({
+		"HMO_3":true,
+		"HMO_7":true,
+		"CHMO_3":true,
+		"CHMO_7":true
+	}),
+	Levels.LEVEL4: CutContent.new({
+		"MEAT_2":true,
+		"MEAT_9":true,
+		"CMEAT_2":true,
+		"CMEAT_9":true,
+	}),
+	Levels.LEVEL5: CutContent.new({
+		"MUSE_6":true,
+		"MUSE_7":true,
+		"MUSE_8":true,
+		"MUSE_9":true,
+		"MUSE_10":true,
+		"CMUSE_5":true,
+		"CMUSE_6":true,
+		"CMUSE_7":true,
+		"CMUSE_8":true,
+		"CMUSE_9":true
+	}),
+	Levels.LEVEL6: CutContent.new({
+		"OLYM_9":true,
+		"COLYM_9":true
+	}),
+	Levels.LEVEL7: CutContent.new({
+		"DANT_8": true,
+		"CDANT_8": true
+	}),
+	Levels.LEVEL8: CutContent.new({
+		"GUNT_9": true,
+		"CGUNT_8": true
+	})
+}
+
+@export var player: Node3D
 @export var player_material: ShaderMaterial
 @export var material_black: Material
 @export var enviroment: WorldEnvironment
@@ -27,7 +74,7 @@ enum Levels{
 
 @onready var ui_list:ItemList = $ItemList
 
-
+var room_list:Dictionary[String, DTIFile.RoomListItem] = {}
 
 var textures_dict: Dictionary[String, Texture2D] = {}
 var sprites_dict: Dictionary[String, Texture2D] = {}
@@ -177,9 +224,9 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 		arrays[ArrayMesh.ARRAY_VERTEX] = vertices
 		arrays[ArrayMesh.ARRAY_TEX_UV] = uvs
 		for poly in submesh:
-			vertices.append(Vector3(-mdkmesh.vertices[poly.v1].x, mdkmesh.vertices[poly.v1].z, mdkmesh.vertices[poly.v1].y)*unit_scale)
-			vertices.append(Vector3(-mdkmesh.vertices[poly.v2].x, mdkmesh.vertices[poly.v2].z, mdkmesh.vertices[poly.v2].y)*unit_scale)
-			vertices.append(Vector3(-mdkmesh.vertices[poly.v3].x, mdkmesh.vertices[poly.v3].z, mdkmesh.vertices[poly.v3].y)*unit_scale)
+			vertices.append(MDKFiles.swizzle_vector(mdkmesh.vertices[poly.v1])*unit_scale)
+			vertices.append(MDKFiles.swizzle_vector(mdkmesh.vertices[poly.v2])*unit_scale)
+			vertices.append(MDKFiles.swizzle_vector(mdkmesh.vertices[poly.v3])*unit_scale)
 			if materials_map.has(poly.flags):
 				var tex: Texture2D = materials_map[poly.flags]
 				var tex_size := Vector2(tex.get_width(), tex.get_height())
@@ -223,6 +270,13 @@ func create_material(flags: int, materials_map: Dictionary[int, Texture2D]) -> M
 		else:
 			return material_black
 		return material
+	elif flags >= -1010 && flags <= -990: # shiny
+		var reflection_offset_y = -990 - flags;
+		var material := ShaderMaterial.new()
+		material.shader = shiny_shader
+		material.set_shader_parameter("main_texture", skybox)
+		material.set_shader_parameter("reflection_offset_y", float(reflection_offset_y)/float(skybox.get_height()))
+		return material;
 	elif flags >= -1027 && flags <= -1024: # transparent color
 		var v = -flags - 1024
 		var transparent_color = files.dti.meta_data.transparency_colors[v];
@@ -257,15 +311,20 @@ func _ready() -> void:
 
 
 	for loc in files.o_mto.room_locations:
-		if loc.name == "DANT_8":
+		if room_list.has(loc.name) == false:
+			continue
+		if cut_content[level].dict.get(loc.name) == true:
 			continue
 		create_mesh(loc.room.level_model, loc.name)
 
-	for i in range(8, files.o_sni.files.size()):
-		var file = files.o_sni.files[i]
-		if file.name == "CDANT_8":
+	for file in files.o_sni.files:
+		if room_list.has(file.name) == false:
+			continue
+		if cut_content[level].dict.get(file.name) == true:
 			continue
 		create_mesh(file.mesh, file.name)
+
+	player.position = MDKFiles.swizzle_vector(files.dti.meta_data.starting_pos) + Vector3(0,4,0)
 	
 	print("Level constructed in %d ms" % (Time.get_ticks_msec() - sw))
 	print("Total loading time %d ms" % (Time.get_ticks_msec() - sw_total))
@@ -283,15 +342,19 @@ func load_files():
 		palette[i] = files.dti.palette[i]
 	sw = Time.get_ticks_msec()
 
+	for room in files.dti.room_list_items:
+		room_list.set(room.name, room)
 
+
+var skybox:Texture2D
 func load_skybox():
-	var skybox := await create_texture(files.dti.skybox_image, palette, textures_dict)
+	skybox = await create_texture(files.dti.skybox_image, palette, textures_dict)
 	enviroment.environment.sky.sky_material.set_shader_parameter("main_texture", skybox);
 
 
 func load_textures():
 	for loc in files.o_mto.room_locations:
-		if loc.name == "DANT_8":
+		if cut_content[level].dict.get(loc.name) == true:
 			continue
 		var room = loc.room
 		for i in room.palette.size():
