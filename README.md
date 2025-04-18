@@ -1,48 +1,45 @@
 # Open source reimplementation of MDK in Godot
 
 This project aims to reimplement [MDK](https://en.wikipedia.org/wiki/MDK_(video_game))
-using [Godot Engine](https://godotengine.org/). **It is not in a playable state yet.**
+using [Godot Engine](https://godotengine.org/). **It is not in a playable state yet. (but you can walk around in the levels)**
 
 This is being developed as a personal project for several reasons:
 
 - Allow MDK to run on modern systems easily, on any platform.
-  No compatibility wrappers needed.
+  No compatibility wrappers needed. (Except this one)
 - Enhance the game in ways that were not possible beforehand: uncapped framerate,
   replayability options, quality of life features, …
 - Give me another "real world" Godot project to work on :slightly_smiling_face:
 
 ___
 
-**Help is needed for reverse engineering file formats!**
-This reverse engineering effort is required to make the game playable.
-If you have experience with reverse engineering (especially 3D file formats),
-feel free to chime in the [GitHub issue tracker](https://github.com/Calinou/godot-mdk/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22).
+**Project status**
+
+Currently only levels mesh have been correctly loaded. That is all levels.
+
+**MDK file formats**
+
+MDK File formats related information can be retrieved by analysing these projects
+
+1. https://github.com/brandonhare/mdk-parse/
+2. MDK-Tools by Buxxe, can be found on the mdk discord server: https://discord.gg/KGG9ttDg
+
+most of the project is based on MDK-Tools. But there is no details on the 3D Animations. That should be in the mdk-parse project.
 
 ___
 
 ## Running the project
 
-This project is currently being developed with
-[Godot 3.4beta4](https://godotengine.org/article/dev-snapshot-godot-3-4-beta-4),
-but it should open fine in 3.3.3 too.
+This project is currently being developed with Godot 4.4
 
 Running the project **requires** game data from a MDK installation.
 You can buy the original game on [GOG](https://www.gog.com/game/mdk)
 or [Steam](https://store.steampowered.com/app/38450/MDK/).
 *Waiting for a sale?* Set up an email alert using [IsThereAnyIdeal](https://isthereanydeal.com/game/mdk/info/).
 
-godot-mdk will automatically detect the GOG installation folder if it's installed
-at the default location (on both Windows and Linux when installed using WINE).
-Auto-detection of the Steam folder hasn't been implemented yet.
-Alternatively, you can copy the MDK data files to a folder called
-`mdk` or `MDK` within this project folder.
+MDK's game folder is hardcoded in levels/load_level.gd#3
 
-Several file formats from the game have been reverse engineered for interoperability
-purposes. This allows the game to run without having to convert game data manually
 (and without redistributing it within this repository).
-
-The project currently does not require game data from MDK to be opened in the editor,
-but this may change in the future (at least for level scenes).
 
 ## License
 
