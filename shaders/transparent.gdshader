@@ -4,7 +4,7 @@ uniform vec4 main_color;
 
 void fragment() {
 	ALBEDO = main_color.rgb;
-	ALPHA = main_color.a;
+	ALPHA = main_color.a/3.0;
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.2;
 }

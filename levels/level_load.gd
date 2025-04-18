@@ -324,7 +324,7 @@ func _ready() -> void:
 			continue
 		create_mesh(file.mesh, file.name)
 
-	player.position = MDKFiles.swizzle_vector(files.dti.meta_data.starting_pos) + Vector3(0,4,0)
+	player.position = MDKFiles.swizzle_vector(files.dti.meta_data.starting_pos)*unit_scale + Vector3(0,4,0)
 	
 	print("Level constructed in %d ms" % (Time.get_ticks_msec() - sw))
 	print("Total loading time %d ms" % (Time.get_ticks_msec() - sw_total))
