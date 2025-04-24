@@ -32,6 +32,8 @@ var sniper_mode := false: set = set_sniper_mode
 var refire_timer := 0.0
 
 var camera_speed:Vector2;
+var life := 0.0
+const grace_peried = 0.4
 
 
 func _ready() -> void:
@@ -39,8 +41,8 @@ func _ready() -> void:
 	pivot.rotation = rotation
 	rotation = Vector3()
 
-
 func _process(delta: float) -> void:
+	life += delta
 	refire_timer = max(0.0, refire_timer - delta)
 
 	# Apply Doom-style friction.
@@ -49,8 +51,11 @@ func _process(delta: float) -> void:
 	velocity.z *= 1 - 10 * delta
 
 	# emulate MDK's weird camera
-	camera_speed *= delta*12
-	camera.rotation.z = lerp(camera.rotation.z,-camera_speed.x/100, 0.1);
+	if life > grace_peried:
+		camera_speed *= delta*12
+		camera.rotation.z = lerp(camera.rotation.z,-camera_speed.x/100, 0.1);
+	else:
+		camera_speed = Vector2(0,0)
 
 	# Apply movement keys.
 	# Player can't move while in sniper mode, as in the original game.
@@ -97,6 +102,8 @@ func _process(delta: float) -> void:
 	
 
 func _input(event: InputEvent) -> void:
+	if life < grace_peried:
+		return
 	if event is InputEventMouseMotion:
 		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 			pivot.rotate(Vector3.UP, -event.relative.x * MOUSE_SENSITIVITY)
