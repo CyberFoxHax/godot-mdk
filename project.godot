@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Godot MDK"
-run/main_scene="uid://dkto6v631k2pe"
+run/main_scene="uid://dle160tc3hssr"
 config/features=PackedStringArray("4.4")
 boot_splash/bg_color=Color(0, 0, 0, 1)
 boot_splash/image="res://splash.png"
@@ -21,7 +21,7 @@ config/icon="res://icon.png"
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
-window/stretch/mode="2d"
+window/stretch/mode="viewport"
 window/stretch/aspect="expand"
 
 [editor_plugins]

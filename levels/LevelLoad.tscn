@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://dkto6v631k2pe"]
+[gd_scene load_steps=16 format=3 uid="uid://dkto6v631k2pe"]
 
 [ext_resource type="Script" uid="uid://dpyveylxifg4d" path="res://levels/level_load.gd" id="1_1ocvx"]
 [ext_resource type="Shader" uid="uid://c3klv5gq42i17" path="res://shaders/MDKTextureConverter.gdshader" id="2_a28o7"]
@@ -11,6 +11,7 @@
 [ext_resource type="Shader" uid="uid://d3h5qdausvsns" path="res://shaders/transparent.gdshader" id="6_hp56d"]
 [ext_resource type="PackedScene" uid="uid://b74fpcybwy21o" path="res://actors/player/player.tscn" id="7_uovlw"]
 [ext_resource type="Shader" uid="uid://16tvjhlr8avg" path="res://shaders/shiny.gdshader" id="8_8pd7r"]
+[ext_resource type="Resource" uid="uid://df3lmouf2ch3l" path="res://mdk_data/godot_converter_helper.tres" id="10_mola2"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_l2661"]
 shader = ExtResource("3_jrfhj")
@@ -28,6 +29,7 @@ sky = SubResource("Sky_6quei")
 
 [node name="LevelLoad" type="Node3D" node_paths=PackedStringArray("player", "enviroment")]
 script = ExtResource("1_1ocvx")
+level = 0
 player = NodePath("Player")
 player_material = ExtResource("2_hp56d")
 material_black = ExtResource("4_uovlw")
@@ -38,14 +40,10 @@ texture_shader = ExtResource("4_5jpsj")
 color_shader = ExtResource("6_5jpsj")
 shiny_shader = ExtResource("8_8pd7r")
 transparent_shader = ExtResource("6_hp56d")
+godot_converter = ExtResource("10_mola2")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.51011, -7.62479)
-
-[node name="ItemList" type="ItemList" parent="."]
-visible = false
-offset_right = 367.0
-offset_bottom = 479.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_m6ke4")

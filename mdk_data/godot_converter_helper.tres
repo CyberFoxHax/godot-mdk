@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=4 format=3 uid="uid://df3lmouf2ch3l"]
+
+[ext_resource type="Shader" uid="uid://c3klv5gq42i17" path="res://shaders/MDKTextureConverter.gdshader" id="1_4xcep"]
+[ext_resource type="Script" uid="uid://clwa3tsyijk46" path="res://mdk_data/GodotConverterHelpers.gd" id="2_8wgpd"]
+[ext_resource type="Shader" uid="uid://n6pg1wi4uro7" path="res://shaders/MDKSpritesheetConverter.gdshader" id="3_rgka6"]
+
+[resource]
+script = ExtResource("2_8wgpd")
+palette_parser_shader = ExtResource("1_4xcep")
+spritesheet_parser_shader = ExtResource("3_rgka6")

@@ -8,6 +8,9 @@ var length2: int
 var files_count: int
 var room_locations: Array
 
+func _init(_name:String):
+	pass
+
 func read(file: ByteBuffer) -> void:
 	address = file.get_position()
 	length1 = file.get_u32()

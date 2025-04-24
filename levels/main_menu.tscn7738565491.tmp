@@ -1,0 +1,168 @@
+[gd_scene load_steps=3 format=3 uid="uid://dle160tc3hssr"]
+
+[ext_resource type="Script" uid="uid://c5dbb1airumt7" path="res://levels/main_menu.gd" id="1_0ettg"]
+[ext_resource type="Resource" uid="uid://df3lmouf2ch3l" path="res://mdk_data/godot_converter_helper.tres" id="2_7rktv"]
+
+[node name="MainMenu" type="Control" node_paths=PackedStringArray("main_menu_parent", "levels_parent")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_0ettg")
+godot_converter = ExtResource("2_7rktv")
+main_menu_parent = NodePath("MainMenu")
+levels_parent = NodePath("Levels")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="MainMenu" type="Control" parent="."]
+layout_mode = 2
+anchors_preset = 0
+offset_left = 81.0
+offset_top = 85.0
+offset_right = 402.0
+offset_bottom = 85.0
+
+[node name="NewGame" type="Button" parent="MainMenu"]
+layout_mode = 2
+offset_right = 321.0
+offset_bottom = 58.0
+theme_override_font_sizes/font_size = 36
+text = "New Game"
+flat = true
+
+[node name="SelectLevel" type="Button" parent="MainMenu"]
+layout_mode = 2
+offset_top = 62.0
+offset_right = 321.0
+offset_bottom = 120.0
+theme_override_font_sizes/font_size = 36
+text = "Select Level"
+flat = true
+
+[node name="AssetBrowser" type="Button" parent="MainMenu"]
+layout_mode = 2
+offset_top = 124.0
+offset_right = 321.0
+offset_bottom = 182.0
+theme_override_font_sizes/font_size = 36
+text = "Asset Browser"
+flat = true
+
+[node name="Options" type="Button" parent="MainMenu"]
+layout_mode = 2
+offset_top = 186.0
+offset_right = 321.0
+offset_bottom = 244.0
+theme_override_font_sizes/font_size = 36
+text = "Options"
+flat = true
+
+[node name="Quit" type="Button" parent="MainMenu"]
+layout_mode = 2
+offset_top = 248.0
+offset_right = 321.0
+offset_bottom = 306.0
+theme_override_font_sizes/font_size = 36
+text = "Quit"
+flat = true
+
+[node name="Levels" type="Control" parent="."]
+visible = false
+layout_mode = 2
+anchors_preset = 0
+offset_left = 81.0
+offset_top = 85.0
+offset_right = 402.0
+offset_bottom = 85.0
+
+[node name="Level1" type="Button" parent="Levels"]
+layout_mode = 2
+offset_right = 321.0
+offset_bottom = 58.0
+theme_override_font_sizes/font_size = 36
+text = "Level 1"
+flat = true
+
+[node name="Level2" type="Button" parent="Levels"]
+layout_mode = 2
+offset_top = 62.0
+offset_right = 321.0
+offset_bottom = 120.0
+theme_override_font_sizes/font_size = 36
+text = "Level 2"
+flat = true
+
+[node name="Level3" type="Button" parent="Levels"]
+layout_mode = 2
+offset_top = 124.0
+offset_right = 321.0
+offset_bottom = 182.0
+theme_override_font_sizes/font_size = 36
+text = "Level 3"
+flat = true
+
+[node name="Level4" type="Button" parent="Levels"]
+layout_mode = 2
+offset_top = 186.0
+offset_right = 321.0
+offset_bottom = 244.0
+theme_override_font_sizes/font_size = 36
+text = "Level 4"
+flat = true
+
+[node name="Level5" type="Button" parent="Levels"]
+layout_mode = 2
+offset_top = 248.0
+offset_right = 321.0
+offset_bottom = 306.0
+theme_override_font_sizes/font_size = 36
+text = "Level 5"
+flat = true
+
+[node name="Level6" type="Button" parent="Levels"]
+layout_mode = 2
+offset_top = 310.0
+offset_right = 321.0
+offset_bottom = 368.0
+theme_override_font_sizes/font_size = 36
+text = "Level 6"
+flat = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 399.0
+offset_top = 85.0
+offset_right = 720.0
+offset_bottom = 456.0
+
+[connection signal="pressed" from="MainMenu/NewGame" to="." method="_on_new_game_pressed"]
+[connection signal="pressed" from="MainMenu/SelectLevel" to="." method="_on_select_level_pressed"]
+[connection signal="pressed" from="MainMenu/AssetBrowser" to="." method="_on_asset_browser_pressed"]
+[connection signal="pressed" from="MainMenu/Quit" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="Levels/Level1" to="." method="_on_level_pressed" binds= [1]]
+[connection signal="pressed" from="Levels/Level2" to="." method="_on_level_pressed" binds= [2]]
+[connection signal="pressed" from="Levels/Level3" to="." method="_on_level_pressed" binds= [3]]
+[connection signal="pressed" from="Levels/Level4" to="." method="_on_level_pressed" binds= [4]]
+[connection signal="pressed" from="Levels/Level5" to="." method="_on_level_pressed" binds= [5]]
+[connection signal="pressed" from="Levels/Level6" to="." method="_on_level_pressed" binds= [6]]

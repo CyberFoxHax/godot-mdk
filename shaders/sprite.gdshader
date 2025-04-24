@@ -29,7 +29,7 @@ vec3 get_frame_uv(vec2 p, int frame){
     // Calculate mask based on original frame bounds
     vec2 mask;
     mask.x = isBetween01((uv.x - original_x_start) / original_size.x);
-    mask.y = isBetween01(uv.y / original_size.y); 
+    mask.y = isBetween01(uv.y / original_size.y);
 
     return vec3(uv, mask.x*mask.y);
 }
@@ -49,7 +49,7 @@ void fragment() {
     ALBEDO = c.rgb;
     ALPHA = c.a * uv.z; // Mask out pixels outside original frame bounds
 }
- 
+
 void light(){
     DIFFUSE_LIGHT += clamp(dot(NORMAL, LIGHT), 0.0, 1.0) * ATTENUATION * LIGHT_COLOR / PI;
 

@@ -1,14 +1,15 @@
-///// Shader to apply palette to texture, and replace "pink" with black alpha
 shader_type canvas_item;
 
 uniform vec4 palette[256];
 uniform sampler2D main_texture:source_color,filter_nearest;
+uniform int tranparent_index = 0;
 
 void fragment() {
-    float index = texture(main_texture, UV).r * 255.0;
-    int palette_idx = int(index);
-	vec4 c = palette[palette_idx];
-    float distance = length(c - vec4(1,0,1,1));
+    int index = int(texture(main_texture, UV).r * 255.0);
+    float distance = length(float(index - tranparent_index));
     float blend = step(0.01, distance);
+
+    int palette_idx = index;
+	vec4 c = palette[palette_idx];
 	COLOR = mix(vec4(0,0,0,0), c, blend);
 }
