@@ -15,6 +15,9 @@ var room_list_items: Array[RoomListItem]
 var palette: PackedColorArray
 var skybox_image: MDKImage
 
+func _init(_name:String):
+	pass
+
 func read(file: ByteBuffer) -> void:
 	filesize = file.get_u32()
 	name = file.get_chars(12)

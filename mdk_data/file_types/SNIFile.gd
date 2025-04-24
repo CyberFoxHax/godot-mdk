@@ -7,6 +7,9 @@ var payload_end: int
 var files_count: int
 var files: Array
 
+func _init(_name:String):
+	pass
+
 func read(file: ByteBuffer) -> void:
 	archive_length = file.get_u32()
 	archive_name = file.get_chars(12)

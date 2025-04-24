@@ -3,7 +3,12 @@ shader_type spatial;
 uniform sampler2D main_texture:source_color,filter_nearest;
 
 void fragment() {
-	vec4 c = texture(main_texture, UV);
+	/*ivec2 s = textureSize(main_texture, 0);
+	vec2 size = vec2(float(s.x), float(s.y));
+	vec2 uv = UV;
+	uv = round(uv*size)/size;*/
+	vec2 uv = UV;
+	vec4 c = texture(main_texture, uv);
 	ALBEDO = c.rgb;
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.05;

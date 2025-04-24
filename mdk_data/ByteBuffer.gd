@@ -2,6 +2,7 @@ class_name ByteBuffer
 
 var _data: PackedByteArray
 var _position: int = 0
+var _positions: Array[int]
 
 func shallow_clone() -> ByteBuffer:
 	var buffer = ByteBuffer.new()
@@ -21,6 +22,13 @@ func get_position() -> int:
 func set_position(pos: int) -> void:
 	_position = pos
 
+func push_position(pos: int) -> void:
+	_positions.append(_position)
+	_position = pos
+
+func pop_position() -> void:
+	_position = _positions.pop_back()
+
 func seek(offset: int) -> void:
 	_position = offset
 
@@ -34,6 +42,11 @@ func get_byte() -> int:
 
 func get_u8() -> int:
 	var value = _data[_position]
+	_position += 1
+	return value
+
+func get_s8() -> int:
+	var value = _data.decode_s8(_position)
 	_position += 1
 	return value
 

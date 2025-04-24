@@ -6,6 +6,9 @@ var version: int
 var identifier: String
 var data_size: int
 
+func _init(_name:String):
+	pass
+
 func read(file: ByteBuffer) -> void:
 	address = file.get_position()
 	version = file.get_u32()

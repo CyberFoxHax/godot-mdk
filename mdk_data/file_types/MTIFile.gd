@@ -8,6 +8,9 @@ var size2: int
 var entry_count: int
 var entries: Array
 
+func _init(_name:String):
+	pass
+
 func read(file: ByteBuffer) -> void:
 	address = file.get_position()
 	size = file.get_u32()
