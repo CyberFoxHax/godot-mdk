@@ -10,9 +10,10 @@
 [sub_resource type="BoxShape3D" id="3"]
 size = Vector3(2, 3.2, 2)
 
-[node name="Player" type="Node3D"]
+[node name="Player" type="Node3D" node_paths=PackedStringArray("hud")]
 script = ExtResource("2")
 bullet_scene = ExtResource("2_1yqc4")
+hud = NodePath("HUD")
 
 [node name="Pivot" type="Node3D" parent="."]
 
@@ -51,5 +52,3 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1)
 target_position = Vector3(0, -1.7, 0)
 
 [node name="HUD" parent="." instance=ExtResource("3")]
-grow_horizontal = 2
-grow_vertical = 2
