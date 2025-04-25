@@ -1,15 +1,16 @@
 # Copyright © 2021 Hugo Locurcio and contributors - MIT License
 # See `LICENSE.md` included in the source distribution for details.
+class_name Player
 extends Node3D
 
-const MOUSE_SENSITIVITY = 0.002
-const RUN_SPEED = 8
-const JUMP_VELOCITY = 0.7
-const GRAVITY = 80
+const MOUSE_SENSITIVITY := 0.002
+const RUN_SPEED := 8
+const JUMP_VELOCITY := 0.7
+const GRAVITY := 80
 
 @export var bullet_scene: PackedScene
 
-
+@export var hud: HUD
 @onready var player_model := $MeshInstance3D as Node3D
 @onready var kinematic_body := $CharacterBody3D as CharacterBody3D
 @onready var pivot := $Pivot as Node3D
@@ -23,7 +24,6 @@ const GRAVITY = 80
 ## The player's current velocity in units per second.
 var velocity := Vector3()
 
-## If `true`, the player is currently in sniper mode (no movement possible).
 var sniper_mode := false: set = set_sniper_mode
 
 ## Time waiting before the player can fire again (in seconds).
@@ -35,11 +35,14 @@ var camera_speed:Vector2;
 var life := 0.0
 const grace_peried = 0.4
 
+func set_y_rotation_degrees(v:float):
+	pivot.rotation_degrees = Vector3(0,v,0)
+	rotation = Vector3()
 
 func _ready() -> void:
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	pivot.rotation = rotation
+	Globals.on_paused_handler(false)
 	rotation = Vector3()
+
 
 func _process(delta: float) -> void:
 	life += delta
@@ -99,8 +102,6 @@ func _process(delta: float) -> void:
 	var angle = atan2(direction.x, direction.z)
 	player_model.rotation = Vector3(0, angle+PI, camera.rotation.z)
 
-	
-
 func _input(event: InputEvent) -> void:
 	if life < grace_peried:
 		return
@@ -121,11 +122,9 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("next_item"):
 		print("next_item")
 
-	if event.is_action_pressed("toggle_mouse_capture"):
-		if Input.get_mouse_mode() == Input.MOUSE_MODE_VISIBLE:
-			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-		else:
-			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	if event.is_action_pressed("pause"):
+		Globals.on_pause.emit(!Globals.is_paused)
+
 
 
 ## Returns `true` if at least one of the raycasts is colliding, `false` otherwise.

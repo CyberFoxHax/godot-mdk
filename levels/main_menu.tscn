@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c5dbb1airumt7" path="res://levels/main_menu.gd" id="1_0ettg"]
 [ext_resource type="Resource" uid="uid://df3lmouf2ch3l" path="res://mdk_data/godot_converter_helper.tres" id="2_7rktv"]
-[ext_resource type="PackedScene" uid="uid://dkto6v631k2pe" path="res://levels/LevelLoad.tscn" id="3_6ymyu"]
+[ext_resource type="PackedScene" uid="uid://dkto6v631k2pe" path="res://levels/level_load.tscn" id="3_6ymyu"]
 
 [node name="MainMenu" type="Control" node_paths=PackedStringArray("background_rect", "main_menu_parent", "levels_parent")]
 layout_mode = 3
@@ -68,6 +68,7 @@ offset_top = 124.0
 offset_right = 321.0
 offset_bottom = 182.0
 theme_override_font_sizes/font_size = 36
+disabled = true
 text = "Asset Browser"
 flat = true
 
@@ -77,6 +78,7 @@ offset_top = 186.0
 offset_right = 321.0
 offset_bottom = 244.0
 theme_override_font_sizes/font_size = 36
+disabled = true
 text = "Options"
 flat = true
 
@@ -161,7 +163,6 @@ offset_bottom = 456.0
 
 [connection signal="pressed" from="MainMenu/NewGame" to="." method="_on_new_game_pressed"]
 [connection signal="pressed" from="MainMenu/SelectLevel" to="." method="_on_select_level_pressed"]
-[connection signal="pressed" from="MainMenu/AssetBrowser" to="." method="_on_asset_browser_pressed"]
 [connection signal="pressed" from="MainMenu/Quit" to="." method="_on_quit_pressed"]
 [connection signal="pressed" from="Levels/Level1" to="." method="_on_level_pressed" binds= [1]]
 [connection signal="pressed" from="Levels/Level2" to="." method="_on_level_pressed" binds= [2]]

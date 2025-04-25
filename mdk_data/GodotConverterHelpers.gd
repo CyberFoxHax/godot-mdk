@@ -86,7 +86,7 @@ func create_bitmap_font(ctx:Node, mdk_font: MDKFont, _palette:PackedColorArray) 
 		font.set_glyph_texture_idx(cache_index, font_size, glyph_index, 0)
 		font.set_glyph_size(cache_index, font_size, glyph_index, glyph_size)
 		font.set_glyph_advance(cache_index, font.fixed_size, glyph_index, Vector2(rect.size.x, 0))
-		font.set_glyph_offset(cache_index, font_size, glyph_index, Vector2(0,  total_height-mdk_glyph.height()+mdk_glyph.vertical_shift+1-total_height*0.7))
+		font.set_glyph_offset(cache_index, font_size, glyph_index, Vector2(0,  total_height-mdk_glyph.height()+mdk_glyph.vertical_shift-total_height*0.7))
 
 	font.set_cache_ascent(cache_index, font.fixed_size, 0.0)  # Ascent (above baseline)
 	font.set_cache_descent(cache_index, font.fixed_size, 0.0)  # Descent (below baseline)

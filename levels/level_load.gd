@@ -1,13 +1,71 @@
+## TODO
+# Implemnt lines rendering using the TRIFLAGS
+# After unwinding the mesh, all vertices have a new ID, but some stuff is still reference old IDs, need to a dictionary of them
+# Hide rooms that are not adjecent to your current location. And going back, doors always lock behind you
+
 class_name LevelLoad
 extends Node3D
 
 const BASE_PATH := "D:/Projects/mdk/MDK-Game"
 
-static var _static_load_has_value:bool = false
+static var _static_load_level_has_value:bool = false
 static var _static_load_level:MDKFiles.Levels
 
 @export var unit_scale: float = 1
 @export var level: MDKFiles.Levels = MDKFiles.Levels.LEVEL7
+@export var player: Player
+@export var player_material: ShaderMaterial
+@export var material_black: Material
+@export var enviroment: WorldEnvironment
+@export var palette_parser_shader: Shader
+@export var spritesheet_parser_shader: Shader
+@export var texture_shader: Shader
+@export var color_shader: Shader
+@export var shiny_shader: Shader
+@export var transparent_shader: Shader
+@export var godot_converter: GodotConverterHelpers
+
+var room_list:Dictionary[String, DTIFile.RoomListItem] = {}
+
+var textures_dict: Dictionary[String, Texture2D] = {}
+var sprites_dict: Dictionary[String, Texture2D] = {}
+var files:MDKFiles
+static var palette: PackedColorArray = []
+
+func _ready() -> void:
+	var sw_total := Time.get_ticks_msec()
+	
+	load_files()
+	load_textures()
+	load_skybox()
+	load_kurt()
+
+	var sw = Time.get_ticks_msec()
+	await RenderingServer.frame_post_draw
+	print("All textures loaded %d ms" % (Time.get_ticks_msec() - sw_total))
+	sw = Time.get_ticks_msec()
+
+	var traverse = files.traverse[level]
+	for loc in traverse.o_mto.room_locations:
+		if room_list.has(loc.name) == false:
+			continue
+		if cut_content[level].dict.get(loc.name) == true:
+			continue
+		create_mesh(loc.room.level_model, loc.name)
+
+	for file in traverse.o_sni.files:
+		if room_list.has(file.name) == false:
+			continue
+		if cut_content[level].dict.get(file.name) == true:
+			continue
+		create_mesh(file.mesh, file.name)
+
+	player.position = MDKFiles.swizzle_vector(traverse.dti.meta_data.starting_pos)*unit_scale + Vector3(0,4,0)
+	player.set_y_rotation_degrees(traverse.dti.meta_data.starting_rot+90)
+	
+	print("Level constructed in %d ms" % (Time.get_ticks_msec() - sw))
+	print("Total loading time %d ms" % (Time.get_ticks_msec() - sw_total))
+
 
 class CutContent:
 	func _init(mdict:Dictionary[String, bool]) -> void:
@@ -54,27 +112,6 @@ var cut_content:Dictionary[MDKFiles.Levels, CutContent] = {
 		"CGUNT_8": true
 	})
 }
-
-@export var player: Node3D
-@export var player_material: ShaderMaterial
-@export var material_black: Material
-@export var enviroment: WorldEnvironment
-@export var palette_parser_shader: Shader
-@export var spritesheet_parser_shader: Shader
-@export var texture_shader: Shader
-@export var color_shader: Shader
-@export var shiny_shader: Shader
-@export var transparent_shader: Shader
-
-@export var godot_converter: GodotConverterHelpers
-
-var room_list:Dictionary[String, DTIFile.RoomListItem] = {}
-
-var textures_dict: Dictionary[String, Texture2D] = {}
-var sprites_dict: Dictionary[String, Texture2D] = {}
-var files:MDKFiles
-
-static var palette: PackedColorArray = []
 
 func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 	var obj := Node3D.new()
@@ -189,43 +226,10 @@ func create_material(material_flags: int, materials_map: Dictionary[int, Texture
 		push_error("Uknown flag: %d" % material_flags)
 	return null
 
-func _ready() -> void:
-	var sw_total := Time.get_ticks_msec()
-	
-	load_files()
-	load_textures()
-	load_skybox()
-	load_kurt()
-
-	var sw = Time.get_ticks_msec()
-	await RenderingServer.frame_post_draw
-	print("All textures loaded %d ms" % (Time.get_ticks_msec() - sw_total))
-	sw = Time.get_ticks_msec()
-
-	var traverse = files.traverse[level]
-	for loc in traverse.o_mto.room_locations:
-		if room_list.has(loc.name) == false:
-			continue
-		if cut_content[level].dict.get(loc.name) == true:
-			continue
-		create_mesh(loc.room.level_model, loc.name)
-
-	for file in traverse.o_sni.files:
-		if room_list.has(file.name) == false:
-			continue
-		if cut_content[level].dict.get(file.name) == true:
-			continue
-		create_mesh(file.mesh, file.name)
-
-	player.position = MDKFiles.swizzle_vector(traverse.dti.meta_data.starting_pos)*unit_scale + Vector3(0,4,0)
-	
-	print("Level constructed in %d ms" % (Time.get_ticks_msec() - sw))
-	print("Total loading time %d ms" % (Time.get_ticks_msec() - sw_total))
-
 func load_files():
-	if _static_load_has_value:
+	if _static_load_level_has_value:
 		level = _static_load_level
-	_static_load_has_value = false
+	_static_load_level_has_value = false
 	var sw := Time.get_ticks_msec()
 	files = MDKFiles.get_instance()
 	files.load_traverse(BASE_PATH, level)

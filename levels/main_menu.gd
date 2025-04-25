@@ -75,21 +75,19 @@ func _load_text():
 		label.show()
 
 func _on_level_pressed(level_number: int) -> void:
+	var mdkLevel:MDKFiles.Levels
 	match level_number: 
-		1: LevelLoad._static_load_level = MDKFiles.Levels.LEVEL7
-		2: LevelLoad._static_load_level = MDKFiles.Levels.LEVEL6
-		3: LevelLoad._static_load_level = MDKFiles.Levels.LEVEL3
-		4: LevelLoad._static_load_level = MDKFiles.Levels.LEVEL4
-		5: LevelLoad._static_load_level = MDKFiles.Levels.LEVEL8
-		6: LevelLoad._static_load_level = MDKFiles.Levels.LEVEL5
-	LevelLoad._static_load_has_value = true
-	get_tree().change_scene_to_packed(load_scene)
+		1: mdkLevel = MDKFiles.Levels.LEVEL7
+		2: mdkLevel = MDKFiles.Levels.LEVEL6
+		3: mdkLevel = MDKFiles.Levels.LEVEL3
+		4: mdkLevel = MDKFiles.Levels.LEVEL4
+		5: mdkLevel = MDKFiles.Levels.LEVEL8
+		6: mdkLevel = MDKFiles.Levels.LEVEL5
+	Globals.change_scene_level_load(self, mdkLevel)
 
 
 func _on_new_game_pressed() -> void:
-	LevelLoad._static_load_has_value = true
-	LevelLoad._static_load_level = MDKFiles.Levels.LEVEL7
-	get_tree().change_scene_to_packed(load_scene)
+	Globals.change_scene_level_load(self, MDKFiles.Levels.LEVEL7)
 
 
 func _on_select_level_pressed() -> void:
@@ -98,8 +96,8 @@ func _on_select_level_pressed() -> void:
 
 
 func _on_asset_browser_pressed() -> void:
-	pass # Replace with function body.
+	pass
 
 
 func _on_quit_pressed() -> void:
-	get_tree().quit()
+	Globals.quit_game()
