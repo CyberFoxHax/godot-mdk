@@ -69,7 +69,7 @@ func create_bitmap_font(ctx:Node, mdk_font: MDKFont, _palette:PackedColorArray) 
 
 	var space_char_code = 32
 	var space_glyph_index = font.get_glyph_index(font.fixed_size, space_char_code, 0)
-	font.set_glyph_uv_rect(cache_index, font_size, space_glyph_index, Rect2(0,0,1,1))  # Last 16x16 slot
+	font.set_glyph_uv_rect(cache_index, font_size, space_glyph_index, Rect2(-1, 0, 1, 1))
 	font.set_glyph_texture_idx(cache_index, font_size, space_glyph_index, 0)
 	font.set_glyph_size(cache_index, font_size, space_glyph_index, Vector2(font.fixed_size, font.fixed_size))  # Same size for consistency
 	font.set_glyph_advance(cache_index, font.fixed_size, space_glyph_index, Vector2(16, 0))  # Critical: Set advance
@@ -96,7 +96,7 @@ func create_bitmap_font(ctx:Node, mdk_font: MDKFont, _palette:PackedColorArray) 
 
 
 
-func create_spritesheet(ctx:Node, spritesheet: MDKSpriteAnimation, _palette:PackedColorArray) -> Texture2D:
+func create_spritesheet(ctx:Node, spritesheet: MDKSpriteAnimation, _palette:PackedColorArray) -> ImageTexture:
 	var total_width = 0
 	var total_height = 0
 	
@@ -129,12 +129,12 @@ func create_spritesheet(ctx:Node, spritesheet: MDKSpriteAnimation, _palette:Pack
 	var colorRect = ColorRect.new()
 	viewport.add_child(colorRect)
 	
-	var shader_material = ShaderMaterial.new()
+	var shader_material := ShaderMaterial.new()
 	shader_material.shader = spritesheet_parser_shader
 	colorRect.material = shader_material
-	var material = shader_material
+	var material := shader_material
 
-	var beforeImage = ImageTexture.create_from_image(total_texture)
+	var beforeImage := ImageTexture.create_from_image(total_texture)
 	
 	viewport.size = Vector2i(total_width, total_height)
 	colorRect.size = viewport.size
@@ -145,9 +145,9 @@ func create_spritesheet(ctx:Node, spritesheet: MDKSpriteAnimation, _palette:Pack
 	await RenderingServer.frame_post_draw
 
 
-	var newtexture = viewport.get_texture().get_image()
+	var newtexture := viewport.get_texture().get_image()
 
-	var texture = ImageTexture.create_from_image(newtexture)
+	var texture := ImageTexture.create_from_image(newtexture)
 	if spritesheet.name == null:
 		return texture
 	print("Spritesheet \"%s\" (%dx%d) loaded" % [spritesheet.name, total_width, total_height])
@@ -161,25 +161,25 @@ func create_spritesheet(ctx:Node, spritesheet: MDKSpriteAnimation, _palette:Pack
 
 
 
-func create_texture(ctx:Node, image: MDKImage, _palette:PackedColorArray, _dict:Dictionary[String, Texture2D], mipmaps:bool=true) -> Texture2D:
+func create_texture(ctx:Node, image: MDKImage, _palette:PackedColorArray, _dict:Dictionary[String, Texture2D], mipmaps:bool=true) -> ImageTexture:
 	var width := image.width
 	var height := image.height
 	if width > 5000 or height > 5000:
 		return null;
 
-	var viewport = SubViewport.new()
+	var viewport := SubViewport.new()
 	viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	ctx.add_child(viewport)
-	var colorRect = ColorRect.new()
+	var colorRect := ColorRect.new()
 	viewport.add_child(colorRect)
 	
-	var shader_material = ShaderMaterial.new()
+	var shader_material := ShaderMaterial.new()
 	shader_material.shader = palette_parser_shader
 	colorRect.material = shader_material
 
-	var beforeTexture = Image.create(width, height, false, Image.FORMAT_R8)
+	var beforeTexture := Image.create(width, height, false, Image.FORMAT_R8)
 	beforeTexture.set_data(width, height, false, Image.FORMAT_R8, image.data)
-	var beforeImage = ImageTexture.create_from_image(beforeTexture)
+	var beforeImage := ImageTexture.create_from_image(beforeTexture)
 	
 	viewport.size = Vector2i(width, height)
 	colorRect.size = Vector2i(width, height)
@@ -190,16 +190,18 @@ func create_texture(ctx:Node, image: MDKImage, _palette:PackedColorArray, _dict:
 	await RenderingServer.frame_post_draw
 
 
-	var img = viewport.get_texture().get_image()
+	var img := viewport.get_texture().get_image()
 	if mipmaps==true:
 		img.generate_mipmaps()
-	var texture = ImageTexture.create_from_image(img)
+	var texture := ImageTexture.create_from_image(img)
 	
 	if image.name == null:
 		return texture
 	if not _dict.has(image.name):
 		_dict[image.name] = texture
 	print("Image \"%s\" (%dx%d) loaded" % [image.name, image.width, image.height])
+
+	#img.save_png("C:\\MDK\\%s.png"%image.name);
 
 	viewport.queue_free()
 	return texture

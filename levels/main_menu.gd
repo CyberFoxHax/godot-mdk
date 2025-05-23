@@ -1,7 +1,5 @@
 extends Control
 
-const BASE_PATH := "D:/Projects/mdk/MDK-Game"
-
 @export var background_rect :TextureRect
 @export var godot_converter: GodotConverterHelpers
 @export var main_menu_parent: Node
@@ -25,8 +23,8 @@ func _ready():
 		buttons.append(button)
 
 	files = MDKFiles.get_instance()
-	files.load_options_bni(BASE_PATH)
-	files.load_globals(BASE_PATH)
+	files.load_options_bni(Globals.MDK_PATH)
+	files.load_globals(Globals.MDK_PATH)
 
 	_load_background()
 	_load_text()
@@ -60,7 +58,8 @@ func _load_text():
 	for child:Node in main_menu_parent.get_children():
 		var label := child
 		label.hide()
-
+	
+	await RenderingServer.frame_post_draw
 	var font := await godot_converter.create_bitmap_font(self, files.fti.fontbig, files.fti.sys_palette.colors);
 
 	var default_theme := ThemeDB.get_default_theme()

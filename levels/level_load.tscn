@@ -27,9 +27,8 @@ background_mode = 2
 background_color = Color(0.352535, 0.300253, 0.659853, 1)
 sky = SubResource("Sky_6quei")
 
-[node name="LevelLoad" type="Node3D" node_paths=PackedStringArray("player", "enviroment")]
+[node name="LevelLoad" type="Node3D" node_paths=PackedStringArray("player", "enviroment", "group_list")]
 script = ExtResource("1_1ocvx")
-level = 0
 player = NodePath("Player")
 player_material = ExtResource("2_hp56d")
 material_black = ExtResource("4_uovlw")
@@ -41,6 +40,7 @@ color_shader = ExtResource("6_5jpsj")
 shiny_shader = ExtResource("8_8pd7r")
 transparent_shader = ExtResource("6_hp56d")
 godot_converter = ExtResource("10_mola2")
+group_list = NodePath("ItemList")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.51011, -7.62479)
@@ -50,3 +50,16 @@ environment = SubResource("Environment_m6ke4")
 
 [node name="Player" parent="." instance=ExtResource("7_uovlw")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+
+[node name="ItemList" type="ItemList" parent="."]
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 141.0
+offset_bottom = -4.0
+grow_vertical = 2
+select_mode = 2
+allow_reselect = true
+item_count = 3
+item_0/text = "0"
+item_1/text = "1"
+item_2/text = "2"

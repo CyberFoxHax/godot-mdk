@@ -1,12 +1,5 @@
-## TODO
-# Implemnt lines rendering using the TRIFLAGS
-# After unwinding the mesh, all vertices have a new ID, but some stuff is still reference old IDs, need to a dictionary of them
-# Hide rooms that are not adjecent to your current location. And going back, doors always lock behind you
-
 class_name LevelLoad
 extends Node3D
-
-const BASE_PATH := "D:/Projects/mdk/MDK-Game"
 
 static var _static_load_level_has_value:bool = false
 static var _static_load_level:MDKFiles.Levels
@@ -24,6 +17,7 @@ static var _static_load_level:MDKFiles.Levels
 @export var shiny_shader: Shader
 @export var transparent_shader: Shader
 @export var godot_converter: GodotConverterHelpers
+@export var group_list: ItemList
 
 var room_list:Dictionary[String, DTIFile.RoomListItem] = {}
 
@@ -31,6 +25,30 @@ var textures_dict: Dictionary[String, Texture2D] = {}
 var sprites_dict: Dictionary[String, Texture2D] = {}
 var files:MDKFiles
 static var palette: PackedColorArray = []
+
+var _arenaObjectsById:=ArenaObjectGroups.new()
+class ArenaObjectGroups:
+	class ArrayOfNode3D:
+		var arr:Array[Node3D] = []
+	class DictOfArrayOfNode3D:
+		var dict:Dictionary[int, ArrayOfNode3D] = {}
+
+	var arenas: Dictionary[String, DictOfArrayOfNode3D] = {}
+
+	func add_object(arena_id:String, id:int, object:Node3D) -> void:
+		if not arenas.has(arena_id):
+			arenas[arena_id] = DictOfArrayOfNode3D.new()
+
+		if not arenas[arena_id].dict.has(id):
+			arenas[arena_id].dict[id] = ArrayOfNode3D.new()
+		
+		arenas[arena_id].dict[id].arr.append(object)
+
+	func get_object(arena_id:String, id:int) -> Array[Node3D]:
+		return arenas[arena_id].dict[id].arr
+
+	func clear():
+		arenas = {}
 
 func _ready() -> void:
 	var sw_total := Time.get_ticks_msec()
@@ -51,20 +69,76 @@ func _ready() -> void:
 			continue
 		if cut_content[level].dict.get(loc.name) == true:
 			continue
-		create_mesh(loc.room.level_model, loc.name)
+		create_mesh(loc.room.level_model, loc.name, false)
 
 	for file in traverse.o_sni.files:
 		if room_list.has(file.name) == false:
 			continue
 		if cut_content[level].dict.get(file.name) == true:
 			continue
-		create_mesh(file.mesh, file.name)
+		create_mesh(file.mesh, file.name, true)
 
 	player.position = MDKFiles.swizzle_vector(traverse.dti.meta_data.starting_pos)*unit_scale + Vector3(0,4,0)
 	player.set_y_rotation_degrees(traverse.dti.meta_data.starting_rot+90)
 	
 	print("Level constructed in %d ms" % (Time.get_ticks_msec() - sw))
 	print("Total loading time %d ms" % (Time.get_ticks_msec() - sw_total))
+
+	for key:String in _arenaObjectsById.arenas:
+		print("%s" % key)
+		var arena :ArenaObjectGroups.DictOfArrayOfNode3D = _arenaObjectsById.arenas[key]
+		for key2 in arena.dict:
+			print("\tgroupid:%d count:%d" % [key2, len(arena.dict[key2].arr)])
+
+	
+	# for arena in _level_arenas:
+	# 	var meshInstance := MeshInstance3D.new()
+	# 	var mesh = BoxMesh.new()
+	# 	meshInstance.position = arena.bounds.get_center()
+	# 	mesh.size = arena.bounds.get_size()
+	# 	meshInstance.mesh = mesh
+	# 	self.add_child(meshInstance)
+
+	for arena in _level_arenas:
+		arena.node.visible = false
+	
+	_level_arenas[0].node.visible = true
+
+	player_arena_changed.connect(_on_arena_changed)
+	group_list.multi_selected.connect(group_list_selected)
+
+func group_list_selected(index: int, selected: bool)->void:
+	var child = group_list.get_item_text(index)
+	var id = int(child)
+	for node in _arenaObjectsById.arenas[current_arena.name].dict[id].arr:
+		node.visible = !selected
+
+func _on_arena_changed(oldArena: LevelArena, newArena:LevelArena) -> void:
+	if oldArena != null:
+		oldArena.node.visible = false
+	newArena.node.visible = true
+
+	group_list.clear()
+	for key in _arenaObjectsById.arenas[newArena.name].dict:
+		group_list.add_item(str(key))
+
+signal player_arena_changed(oldArena: LevelArena, newArena:LevelArena)
+
+var time: float = 0
+
+var current_arena : LevelArena
+func _process(delta: float) -> void:
+	time += delta
+
+	var new_arena:LevelArena
+	for arena in _level_arenas:
+		if arena.bounds.is_point_inside(player.get_player_position()):
+			new_arena = arena
+			break
+	if new_arena != null:
+		if new_arena != current_arena:
+			player_arena_changed.emit(current_arena, new_arena)
+		current_arena = new_arena
 
 
 class CutContent:
@@ -113,19 +187,68 @@ var cut_content:Dictionary[MDKFiles.Levels, CutContent] = {
 	})
 }
 
-func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
+class LevelArena:
+	var mdk_mesh: MDKMesh
+	var name: String
+	var node: Node3D
+	var bounds: Bounds
+	var is_corridor: bool
+
+var _level_arenas: Array[LevelArena] = []
+
+class Bounds:
+	var _min: Vector3
+	var _max: Vector3
+
+	var _first = true
+
+	func expand(point: Vector3) -> void:
+		if _first:
+			_first = false
+			_min = point
+			_max = point
+		else:
+			_min = _min.min(point)
+			_max = _max.max(point)
+
+	func get_center() -> Vector3:
+		return (_min + _max) / 2.0
+
+	func get_size() -> Vector3:
+		return _max - _min
+
+	func is_point_inside(point: Vector3) -> bool:
+		return (point.x >= _min.x and point.x <= _max.x and
+				point.y >= _min.y and point.y <= _max.y and
+				point.z >= _min.z and point.z <= _max.z)
+
+	func clone():
+		var d := Bounds.new()
+		d._min = _min
+		d._max = _max
+		return d
+
+func create_mesh(mdkmesh: MDKMesh, _name: String, is_corridor:bool) -> Node3D:
 	var obj := Node3D.new()
 	obj.name = _name
 	self.add_child(obj)
-	
+	var arena := LevelArena.new()
+	arena.mdk_mesh = mdkmesh
+	arena.name = _name
+	arena.node = obj
+	arena.is_corridor = is_corridor;
+	arena.bounds = Bounds.new()
+	_level_arenas.append(arena)
+
 	var submeshes:Dictionary[int, Array] = {}
 	for poly in mdkmesh.polygons:
 		if poly.is_hidden():
 			continue
-		if not submeshes.has(poly.material_flags):
+		var key = poly.submesh_id()
+		if not submeshes.has(key):
 			var arr:Array[Polygon] = []
-			submeshes[poly.material_flags] = arr
-		submeshes[poly.material_flags].append(poly)
+			submeshes[key] = arr
+		submeshes[key].append(poly)
 	
 	var materials_map :Dictionary[int, Texture2D]= {}
 	for i in range(mdkmesh.material_names.size()):
@@ -134,14 +257,17 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 			materials_map[i] = textures_dict[item]
 	
 	var material_array :Array[Material]= []
-	for material_flags in submeshes.keys():
-		material_array.append(create_material(material_flags, materials_map))
-	
+	for submesh:Array[Polygon] in submeshes.values():
+		var material_flags := submesh[0].material_flags
+		var mmm := create_material(material_flags, materials_map)
+		material_array.append(mmm)
+
 	var submeshIndex := 0
-	for material_flags in submeshes.keys():
+	for submesh:Array[Polygon] in submeshes.values():
 		var obj2 = Node3D.new()
-		obj2.name = str(material_flags)
-		var submesh :Array[Polygon]= submeshes[material_flags]
+		var poly1 := submesh[0]
+		obj2.name = "mat:%d - id:%d" % [poly1.material_flags, poly1.id]
+
 		var arrays := []
 		var vertices:= PackedVector3Array ()
 		var uvs:= PackedVector2Array ()
@@ -149,9 +275,17 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 		arrays[ArrayMesh.ARRAY_VERTEX] = vertices
 		arrays[ArrayMesh.ARRAY_TEX_UV] = uvs
 		for poly in submesh:
-			vertices.append(MDKFiles.swizzle_vector(mdkmesh.vertices[poly.v1])*unit_scale)
-			vertices.append(MDKFiles.swizzle_vector(mdkmesh.vertices[poly.v2])*unit_scale)
-			vertices.append(MDKFiles.swizzle_vector(mdkmesh.vertices[poly.v3])*unit_scale)
+			var v1 := MDKFiles.swizzle_vector(mdkmesh.vertices[poly.v1])*unit_scale
+			var v2 := MDKFiles.swizzle_vector(mdkmesh.vertices[poly.v2])*unit_scale
+			var v3 := MDKFiles.swizzle_vector(mdkmesh.vertices[poly.v3])*unit_scale
+			vertices.append(v1)
+			vertices.append(v2)
+			vertices.append(v3)
+			if poly1.id == 0:
+				arena.bounds.expand(v1)
+				arena.bounds.expand(v2)
+				arena.bounds.expand(v3)
+			
 			if materials_map.has(poly.material_flags):
 				var tex: Texture2D = materials_map[poly.material_flags]
 				var tex_size := Vector2(tex.get_width(), tex.get_height())
@@ -162,12 +296,11 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 				uvs.append(Vector2.ZERO)
 				uvs.append(Vector2.ZERO)
 				uvs.append(Vector2.ZERO)
-				
+		
 		var mr := MeshInstance3D.new()
 		var mesh := ArrayMesh.new()
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		mesh.surface_set_material(0, material_array[submeshIndex])
-		#mesh.surface_set_material(submeshIndex, material_array[submeshIndex])
 		
 		submeshIndex = submeshIndex+1;
 	
@@ -181,6 +314,8 @@ func create_mesh(mdkmesh: MDKMesh, _name: String) -> Node3D:
 		collider.shape = shape
 		staticbody3d.add_child(collider)
 		obj2.add_child(staticbody3d);
+		_arenaObjectsById.add_object(_name, poly1.id, obj2)
+
 		obj.add_child(obj2)
 
 	return obj
@@ -232,7 +367,7 @@ func load_files():
 	_static_load_level_has_value = false
 	var sw := Time.get_ticks_msec()
 	files = MDKFiles.get_instance()
-	files.load_traverse(BASE_PATH, level)
+	files.load_traverse(Globals.MDK_PATH, level)
 
 	var traverse = files.traverse[level]
 

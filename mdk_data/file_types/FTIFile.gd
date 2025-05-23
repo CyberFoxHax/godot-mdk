@@ -1,28 +1,31 @@
 class_name FTIFile
 extends BinaryReadable
 
-var filesize: int
-var entry_count: int
-var entries: Array
+var _filesize: int
+var _entry_count: int
+var _entries: Array[FTIEntry]
+
 var sys_palette: SysPalette
 
 var fontbig:MDKFont
 var fontsml:MDKFont
 
+var strings: Dictionary[String, String] = {}
+
 func _init(_name:String):
 	pass
 
 func read(file: ByteBuffer) -> void:
-	filesize = file.get_u32()
-	entry_count = file.get_u32()
+	_filesize = file.get_u32()
+	_entry_count = file.get_u32()
 	
-	entries.resize(entry_count)
-	for i in range(entry_count):
-		entries[i] = FTIEntry.new()
-		entries[i].read(file)
+	_entries.resize(_entry_count)
+	for i in range(_entry_count):
+		_entries[i] = FTIEntry.new()
+		_entries[i].read(file)
 	
 	var dict:Dictionary[String, FTIEntry] = {}
-	for f in entries:
+	for f in _entries:
 		dict[f.name] = f
 	
 	sys_palette = _read_section(file, dict["SYS_PAL"], SysPalette)
@@ -30,6 +33,17 @@ func read(file: ByteBuffer) -> void:
 	fontsml = _read_section(file, dict["FONTSML"], MDKFont)
 	fontbig.name = "FONTBIG"
 	fontsml.name = "FONTSML"
+	
+	for i in range(6, 328):
+		var entry = _entries[i]
+		file.seek(entry.offset + 4)
+		var text: String = ""
+		while true:
+			var code = file.get_u8()
+			if code == 0:
+				break
+			text += String.chr(code)
+		strings[entry.name] = text
 
 func _read_section(file:ByteBuffer, entry:FTIEntry, type:GDScript):
 	file.seek(entry.offset + 4)

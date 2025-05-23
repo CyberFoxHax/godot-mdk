@@ -35,6 +35,9 @@ var camera_speed:Vector2;
 var life := 0.0
 const grace_peried = 0.4
 
+func get_player_position() -> Vector3:
+	return pivot.global_position
+
 func set_y_rotation_degrees(v:float):
 	pivot.rotation_degrees = Vector3(0,v,0)
 	rotation = Vector3()
