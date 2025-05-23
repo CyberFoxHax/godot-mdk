@@ -1,23 +1,23 @@
 class_name SNIFile
 extends BinaryReadable
 
-var archive_length: int
+var _archive_length: int
 var archive_name: String
-var payload_end: int
-var files_count: int
-var files: Array
+var _payload_end: int
+var _files_count: int
+var files: Array[FileEntry]
 
 func _init(_name:String):
 	pass
 
 func read(file: ByteBuffer) -> void:
-	archive_length = file.get_u32()
+	_archive_length = file.get_u32()
 	archive_name = file.get_chars(12)
-	payload_end = file.get_u32()
-	files_count = file.get_u32()
+	_payload_end = file.get_u32()
+	_files_count = file.get_u32()
 	
-	files.resize(files_count)
-	for i in range(files_count):
+	files.resize(_files_count)
+	for i in range(_files_count):
 		files[i] = FileEntry.new()
 		files[i].read(file)
 
@@ -26,23 +26,24 @@ class FileEntry:
 	
 	var name: String
 	var type: int
-	var offset: int
-	var size: int
+	var _offset: int
+	var _size: int
+	
 	var wav_audio: PackedByteArray
 	var mesh: MDKMesh
 	
 	func read(file: ByteBuffer) -> void:
 		name = file.get_chars(12)
 		type = file.get_u32()
-		offset = file.get_u32()
-		size = file.get_u32()
+		_offset = file.get_u32()
+		_size = file.get_u32()
 		
 		var original_position := file.get_position()
-		file.seek(offset + 4)
+		file.seek(_offset + 4)
 		var header := file.get_chars(4)
 		if header == "RIFF":
 			file.seek(file.get_position() - 4)
-			wav_audio = file.get_bytes(size)
+			wav_audio = file.get_bytes(_size)
 		else:
 			file.seek(file.get_position() - 4)
 			mesh = MDKMesh.new()

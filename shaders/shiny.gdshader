@@ -9,11 +9,14 @@ void fragment() {
 
     vec3 camera_forward = normalize(CAMERA_DIRECTION_WORLD);
     float pitch = asin(camera_forward.y);
-	pitch = clamp(pitch, -0.65, 0.60);
-	pitch /= 3.;
+	pitch /= 2.;
 
-	ALBEDO = texture(main_texture, SCREEN_UV*0.6+vec2(0.0, 0.2)+vec2(yaw/4.0, reflection_offset_y*50.0+pitch)).rgb;
+	vec2 uv = SCREEN_UV*0.6+vec2(0.0, 0.2)+vec2(yaw/4.0, reflection_offset_y*50.0+pitch);
 	
-	ROUGHNESS = 1.0; 
+	ALBEDO = texture(main_texture, uv).rgb;
+	float m = round(fract(uv.y/2.0));
+	ALBEDO = mix(ALBEDO, texture(main_texture, vec2(uv.x, 1.0-uv.y)).rgb, m);
+	
+	ROUGHNESS = 1.0;
 	SPECULAR = 0.1;
 }

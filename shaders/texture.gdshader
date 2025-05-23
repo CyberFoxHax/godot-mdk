@@ -11,7 +11,7 @@ void fragment() {
 	vec4 c = texture(main_texture, uv);
 	ALBEDO = c.rgb;
 	ROUGHNESS = 1.0;
-	SPECULAR = 0.05;
+	SPECULAR = 0.02;
 	//float avg = (c.r+c.g+c.b)/3.0;
 	//ROUGHNESS = mix(0.2, 1.0, avg);
 	//SPECULAR = mix(0.0, 0.5, avg);

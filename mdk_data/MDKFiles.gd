@@ -2,7 +2,7 @@ class_name MDKFiles
 
 static var global_files:MDKFiles;
 
-static func get_instance():
+static func get_instance() -> MDKFiles:
 	if global_files == null:
 		global_files = MDKFiles.new()
 	return global_files
@@ -31,10 +31,10 @@ var data_types:Dictionary[String, GDScript] = {
 }
 
 #convert MDK's coodinate system to Godot
-static func swizzle_vector(v:Vector3):
+static func swizzle_vector(v:Vector3) -> Vector3:
 	return Vector3(-v.x, v.z, v.y)
 
-func load_options_bni(base_path: String):
+func load_options_bni(base_path: String) -> void:
 	var file_paths:Dictionary[String, String] = {
 		"bni": base_path.path_join("MISC").path_join("OPTIONS.BNI"),
 	}
@@ -45,7 +45,7 @@ func load_options_bni(base_path: String):
 
 
 
-func load_globals(base_path: String):
+func load_globals(base_path: String) -> void:
 	var file_paths:Dictionary[String, String] = {
 		"fti": base_path.path_join("MISC").path_join("mdkfont.fti"),
 	}
@@ -55,7 +55,7 @@ func load_globals(base_path: String):
 
 	#_load_file(file_paths["fti"], FTIFile, [null], 0)
 
-func load_fall3d(base_path: String, level: int):
+func load_fall3d(base_path: String, level: int) -> void:
 	var path := base_path.path_join("FALL3D")
 	var file_paths:Dictionary[String, String] = {
 		"bni": path.path_join("FALL3D.BNI"),
@@ -66,7 +66,7 @@ func load_fall3d(base_path: String, level: int):
 
 	pass
 
-func load_stream(base_path: String, level: String):
+func load_stream(base_path: String, level: String) -> void:
 	var path := base_path.path_join("STREAM")
 	var file_paths:Dictionary[String, String] = {
 		"bni": path.path_join("STREAM.BNI"),

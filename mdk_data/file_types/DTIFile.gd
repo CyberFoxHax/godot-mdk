@@ -1,14 +1,15 @@
 class_name DTIFile
 extends BinaryReadable
 
-var filesize: int
+var _filesize: int
 var name: String
-var filesize2: int
-var offset_metadata: int
-var offset_spawnpoints: int
-var offset_roomlist: int
-var offset_palette: int
-var offset_skyboximage: int
+var _filesize2: int
+var _offset_metadata: int
+var _offset_spawnpoints: int
+var _offset_roomlist: int
+var _offset_palette: int
+var _offset_skyboximage: int
+
 var meta_data: MetaData_
 var spawnpoints: Array[Spawnpoint]
 var room_list_items: Array[RoomListItem]
@@ -19,24 +20,24 @@ func _init(_name:String):
 	pass
 
 func read(file: ByteBuffer) -> void:
-	filesize = file.get_u32()
+	_filesize = file.get_u32()
 	name = file.get_chars(12)
-	filesize2 = file.get_u32()
+	_filesize2 = file.get_u32()
 	
-	offset_metadata = file.get_u32()
-	offset_spawnpoints = file.get_u32()
-	offset_roomlist = file.get_u32()
-	offset_palette = file.get_u32()
-	offset_skyboximage = file.get_u32()
+	_offset_metadata = file.get_u32()
+	_offset_spawnpoints = file.get_u32()
+	_offset_roomlist = file.get_u32()
+	_offset_palette = file.get_u32()
+	_offset_skyboximage = file.get_u32()
 	
 	var original_position := file.get_position()
-	file.seek(offset_metadata + 4)
+	file.seek(_offset_metadata + 4)
 	meta_data = MetaData_.new()
 	meta_data.read(file)
 	file.seek(original_position)
 	
 	original_position = file.get_position()
-	file.seek(offset_spawnpoints + 4)
+	file.seek(_offset_spawnpoints + 4)
 	var spawn_count :int= file.get_u32()
 	spawnpoints.resize(spawn_count)
 	for i in range(spawn_count):
@@ -45,7 +46,7 @@ func read(file: ByteBuffer) -> void:
 	file.seek(original_position)
 	
 	original_position = file.get_position()
-	file.seek(offset_roomlist + 4)
+	file.seek(_offset_roomlist + 4)
 	var room_count :int= file.get_u32()
 	room_list_items.resize(room_count)
 	for i in range(room_count):
@@ -54,7 +55,7 @@ func read(file: ByteBuffer) -> void:
 	file.seek(original_position)
 	
 	original_position = file.get_position()
-	file.seek(offset_palette + 4)
+	file.seek(_offset_palette + 4)
 	var unused_colors_count :int = file.get_u32()
 	palette.resize(256)
 	for i in range(256):
@@ -67,7 +68,7 @@ func read(file: ByteBuffer) -> void:
 	file.seek(original_position)
 	
 	original_position = file.get_position()
-	file.seek(offset_skyboximage + 4)
+	file.seek(_offset_skyboximage + 4)
 	skybox_image = MDKImage.new(name + "_skybox")
 	skybox_image.width = meta_data.skybox_width + 4
 	skybox_image.height = meta_data.skybox_height
@@ -92,6 +93,7 @@ class Spawnpoint:
 		)
 		spawn_rotation = file.get_float()
 
+## Todo, missing a lot, check Brandons project
 class RoomListItem:
 	extends BinaryReadable
 	
