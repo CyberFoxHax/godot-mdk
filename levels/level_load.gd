@@ -1,3 +1,6 @@
+#todo
+# load neighbouring arenas
+
 class_name LevelLoad
 extends Node3D
 
@@ -19,13 +22,16 @@ static var _static_load_level:MDKFiles.Levels
 @export var godot_converter: GodotConverterHelpers
 @export var group_list: ItemList
 
-var room_list:Dictionary[String, DTIFile.RoomListItem] = {}
+var room_list:Dictionary[String, DTIFile.DTIArena] = {}
 
 var textures_dict: Dictionary[String, Texture2D] = {}
 var sprites_dict: Dictionary[String, Texture2D] = {}
 var files:MDKFiles
 static var palette: PackedColorArray = []
 
+# arenas sorted into groups
+# Full type would have been Dictionary[String, Dictionary[int, Array[Node]]]
+# but this can't be expressed in gdscript, so you get this abomination instead
 var _arenaObjectsById:=ArenaObjectGroups.new()
 class ArenaObjectGroups:
 	class ArrayOfNode3D:
@@ -60,7 +66,7 @@ func _ready() -> void:
 
 	var sw = Time.get_ticks_msec()
 	await RenderingServer.frame_post_draw
-	print("All textures loaded %d ms" % (Time.get_ticks_msec() - sw_total))
+	MyGlobal.print_info("All textures loaded %d ms" % (Time.get_ticks_msec() - sw_total))
 	sw = Time.get_ticks_msec()
 
 	var traverse = files.traverse[level]
@@ -78,31 +84,55 @@ func _ready() -> void:
 			continue
 		create_mesh(file.mesh, file.name, true)
 
+	var i:=0
+	for arena:DTIFile.DTIArena in traverse.dti.arenas:
+		for entity in arena.entities:
+			i = i + 1
+			var bounds = Bounds.new()
+			bounds._min = MDKFiles.swizzle_vector(entity.pos_min)*unit_scale
+			bounds._max = MDKFiles.swizzle_vector(entity.pos_max)*unit_scale
+
+			var mi = MeshInstance3D.new()
+			mi.name = "%s %s %s #%d" % [DTIFile.DTIEntityType.keys()[entity.kind], arena.name, entity.id, i]
+			mi.mesh = BoxMesh.new()
+			mi.position = bounds.get_center()
+			mi.scale = bounds.get_size()
+
+			if mi.scale == Vector3.ZERO:
+				mi.scale = Vector3.ONE*unit_scale*5
+			
+			if mi.scale.x == 0:
+				mi.scale.x = unit_scale
+			if mi.scale.y == 0:
+				mi.scale.y = unit_scale
+			if mi.scale.z == 0:
+				mi.scale.z = unit_scale
+
+			add_child(mi)
+			mi.set_meta("kind", DTIFile.DTIEntityType.keys()[entity.kind])
+			mi.set_meta("arena_name", arena.name)
+			mi.set_meta("id", entity.id)
+			mi.set_meta("value", entity.value)
+			mi.set_meta("pos_min", bounds._min)
+			mi.set_meta("pos_max", bounds._max)
+
 	player.position = MDKFiles.swizzle_vector(traverse.dti.meta_data.starting_pos)*unit_scale + Vector3(0,4,0)
 	player.set_y_rotation_degrees(traverse.dti.meta_data.starting_rot+90)
 	
-	print("Level constructed in %d ms" % (Time.get_ticks_msec() - sw))
-	print("Total loading time %d ms" % (Time.get_ticks_msec() - sw_total))
+	MyGlobal.print_info("Level constructed in %d ms" % (Time.get_ticks_msec() - sw))
+	MyGlobal.print_info("Total loading time %d ms" % (Time.get_ticks_msec() - sw_total))
 
-	for key:String in _arenaObjectsById.arenas:
-		print("%s" % key)
-		var arena :ArenaObjectGroups.DictOfArrayOfNode3D = _arenaObjectsById.arenas[key]
-		for key2 in arena.dict:
-			print("\tgroupid:%d count:%d" % [key2, len(arena.dict[key2].arr)])
+	# for key:String in _arenaObjectsById.arenas:
+	# 	print("%s" % key)
+	# 	var arena :ArenaObjectGroups.DictOfArrayOfNode3D = _arenaObjectsById.arenas[key]
+	# 	for key2 in arena.dict:
+	# 		print("\tgroupid:%d count:%d" % [key2, len(arena.dict[key2].arr)])
 
 	
 	# for arena in _level_arenas:
-	# 	var meshInstance := MeshInstance3D.new()
-	# 	var mesh = BoxMesh.new()
-	# 	meshInstance.position = arena.bounds.get_center()
-	# 	mesh.size = arena.bounds.get_size()
-	# 	meshInstance.mesh = mesh
-	# 	self.add_child(meshInstance)
-
-	for arena in _level_arenas:
-		arena.node.visible = false
+	# 	arena.node.visible = false
 	
-	_level_arenas[0].node.visible = true
+	# _level_arenas[0].node.visible = true
 
 	player_arena_changed.connect(_on_arena_changed)
 	group_list.multi_selected.connect(group_list_selected)
@@ -114,6 +144,7 @@ func group_list_selected(index: int, selected: bool)->void:
 		node.visible = !selected
 
 func _on_arena_changed(oldArena: LevelArena, newArena:LevelArena) -> void:
+	return
 	if oldArena != null:
 		oldArena.node.visible = false
 	newArena.node.visible = true
@@ -130,6 +161,9 @@ var current_arena : LevelArena
 func _process(delta: float) -> void:
 	time += delta
 
+	## check which arena player is in, if changed dispatch event
+	# possible gotcha: Player can be in multiple arenas
+	# possible gotcha: Arena is mesh bounding box for group 0
 	var new_arena:LevelArena
 	for arena in _level_arenas:
 		if arena.bounds.is_point_inside(player.get_player_position()):
@@ -263,10 +297,12 @@ func create_mesh(mdkmesh: MDKMesh, _name: String, is_corridor:bool) -> Node3D:
 		material_array.append(mmm)
 
 	var submeshIndex := 0
+	var unique_i := 0
 	for submesh:Array[Polygon] in submeshes.values():
+		unique_i = unique_i + 1
 		var obj2 = Node3D.new()
 		var poly1 := submesh[0]
-		obj2.name = "mat:%d - id:%d" % [poly1.material_flags, poly1.id]
+		obj2.name = "mat:%d - id:%d #%d" % [poly1.material_flags, poly1.id, unique_i]
 
 		var arrays := []
 		var vertices:= PackedVector3Array ()
@@ -301,6 +337,13 @@ func create_mesh(mdkmesh: MDKMesh, _name: String, is_corridor:bool) -> Node3D:
 		var mesh := ArrayMesh.new()
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		mesh.surface_set_material(0, material_array[submeshIndex])
+		var submeshHash:int = hash(poly1.submesh_id())
+		material_array[submeshIndex].set_shader_parameter("tint", Vector4(
+			float(submeshHash & 0xff)/0xff,
+			float(submeshHash>>8 & 0xff)/0xff,
+			float(submeshHash>>16 & 0xff)/0xff,
+			0
+		)*0.2)
 		
 		submeshIndex = submeshIndex+1;
 	
@@ -351,14 +394,14 @@ func create_material(material_flags: int, materials_map: Dictionary[int, Texture
 		return material;
 	elif material_flags == -1028:
 		# wobble effect for under water stuff???
-		print("Wobble effect");
+		MyGlobal.print_warn("Unimplemented material wobble effect");
 		return null
 	elif material_flags < -1028:
 		# no idea
-		print("Less than -1028");
+		MyGlobal.print_warn("Material flag less than -1028, what does this mean? Who knows, find the surface in-game to learn something");
 		return null
 	else:
-		push_error("Uknown flag: %d" % material_flags)
+		MyGlobal.print_error("Uknown flag: %d" % material_flags)
 	return null
 
 func load_files():
@@ -372,16 +415,16 @@ func load_files():
 	var traverse = files.traverse[level]
 
 	if traverse.load_success == false:
-		print("failed to load level %s" % MDKFiles.Levels.keys()[level])
+		MyGlobal.print_error("failed to load level %s" % MDKFiles.Levels.keys()[level])
 		return
-	print("Data loaded in %d ms" % (Time.get_ticks_msec() - sw))
+	MyGlobal.print_info("Data loaded in %d ms" % (Time.get_ticks_msec() - sw))
 
 	palette.resize(traverse.dti.palette.size())
 	for i in range(traverse.dti.palette.size()):
 		palette[i] = traverse.dti.palette[i]
 	sw = Time.get_ticks_msec()
 
-	for room in traverse.dti.room_list_items:
+	for room in traverse.dti.arenas:
 		room_list.set(room.name, room)
 
 
@@ -416,7 +459,7 @@ func load_kurt():
 
 	var idle = files.traverse_bni.sprites["K_RUN"]
 	idle.unpack()
-	print("Kurt unpacked in %d ms" % (Time.get_ticks_msec() - sw))
+	MyGlobal.print_info("Kurt unpacked in %d ms" % (Time.get_ticks_msec() - sw))
 
 	
 	var spritesheet = await godot_converter.create_spritesheet(self, idle, palette);

@@ -4,6 +4,9 @@ extends Resource
 @export var palette_parser_shader: Shader
 @export var spritesheet_parser_shader: Shader
 
+func _print_info(msg: String):
+	MyGlobal.print_info(msg)
+
 func create_bitmap_font(ctx:Node, mdk_font: MDKFont, _palette:PackedColorArray) -> FontFile:
 	var total_width = 0
 	var total_height = 0
@@ -54,7 +57,7 @@ func create_bitmap_font(ctx:Node, mdk_font: MDKFont, _palette:PackedColorArray) 
 
 	var newtexture := viewport.get_texture().get_image()
 
-	print("Font atlas generated \"%s\" (%dx%d)" % [mdk_font.name, total_width, total_height])
+	_print_info("Font atlas generated \"%s\" (%dx%d)" % [mdk_font.name, total_width, total_height])
 
 	viewport.queue_free()
 
@@ -150,7 +153,7 @@ func create_spritesheet(ctx:Node, spritesheet: MDKSpriteAnimation, _palette:Pack
 	var texture := ImageTexture.create_from_image(newtexture)
 	if spritesheet.name == null:
 		return texture
-	print("Spritesheet \"%s\" (%dx%d) loaded" % [spritesheet.name, total_width, total_height])
+	_print_info("Spritesheet \"%s\" (%dx%d) loaded" % [spritesheet.name, total_width, total_height])
 
 	viewport.queue_free()
 
@@ -199,7 +202,7 @@ func create_texture(ctx:Node, image: MDKImage, _palette:PackedColorArray, _dict:
 		return texture
 	if not _dict.has(image.name):
 		_dict[image.name] = texture
-	print("Image \"%s\" (%dx%d) loaded" % [image.name, image.width, image.height])
+	_print_info("Image \"%s\" (%dx%d) loaded" % [image.name, image.width, image.height])
 
 	#img.save_png("C:\\MDK\\%s.png"%image.name);
 

@@ -12,7 +12,7 @@ var _offset_skyboximage: int
 
 var meta_data: MetaData_
 var spawnpoints: Array[Spawnpoint]
-var room_list_items: Array[RoomListItem]
+var arenas: Array[DTIArena]
 var palette: PackedColorArray
 var skybox_image: MDKImage
 
@@ -48,10 +48,10 @@ func read(file: ByteBuffer) -> void:
 	original_position = file.get_position()
 	file.seek(_offset_roomlist + 4)
 	var room_count :int= file.get_u32()
-	room_list_items.resize(room_count)
+	arenas.resize(room_count)
 	for i in range(room_count):
-		room_list_items[i] = RoomListItem.new()
-		room_list_items[i].read(file)
+		arenas[i] = DTIArena.new()
+		arenas[i].read(file)
 	file.seek(original_position)
 	
 	original_position = file.get_position()
@@ -93,18 +93,69 @@ class Spawnpoint:
 		)
 		spawn_rotation = file.get_float()
 
-## Todo, missing a lot, check Brandons project
-class RoomListItem:
+#1,3,6,7,8 is used in level7
+enum DTIEntityType {
+	Invalid = 0,
+	ArenaShowZone = 1,
+	Hotgen = 2, #
+	ArenaActivateZone = 3,
+	Hotpick = 4, #
+	HidingSpot = 5, #
+	ArenaConnectZone = 6,
+	Fan = 7,
+	JumpPoint = 8,
+	Slidething = 9, #
+}
+
+class DTIArena:
 	extends BinaryReadable
 	
 	var name: String
-	var offset_connectors: int
+	var arena_offset: int
 	var room_cam_angle: float
+	var num_entities: int
+
+	var entities: Array[ArenaEntity] = []
 	
 	func read(file: ByteBuffer) -> void:
 		name = file.get_chars(8)
-		offset_connectors = file.get_u32()
+		arena_offset = file.get_u32()
 		room_cam_angle = file.get_float()
+
+		file.push_position(arena_offset+4)
+		num_entities = file.get_u32()
+
+		for i in num_entities:
+			var entity = ArenaEntity.new()
+			entity.kind = file.get_u32();
+			entity.id = file.get_u32();
+			entity.value = file.get_u32();
+			entity.pos_min = Vector3(
+				file.get_float(),
+				file.get_float(),
+				file.get_float()
+			);
+			entity.pos_max = Vector3(
+				file.get_float(),
+				file.get_float(),
+				file.get_float()
+			);
+			if entity.pos_max == Vector3.ZERO:
+				entity.pos_max = entity.pos_min
+
+			entities.append(entity)
+
+			#if kind != 2 && kind != 6 {
+			#	assert_eq!(value, 0);
+			#}
+		file.pop_position()
+
+class ArenaEntity:
+	var kind: DTIEntityType
+	var id: int
+	var value: int
+	var pos_min: Vector3
+	var pos_max: Vector3
 
 class MetaData_:
 	extends BinaryReadable

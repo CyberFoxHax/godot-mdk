@@ -128,6 +128,6 @@ func _load_file(path: String, data_type: GDScript, results: Array[Object], resul
 	var data = data_type.new(path.get_file())
 	data.read(byteBuffer)
 	file.close()
-	
-	print("loaded " + path)
+
+	MyGlobal.print_info("loaded " + path)
 	results[result_key] = data

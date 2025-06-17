@@ -7,19 +7,17 @@ const MOUSE_SENSITIVITY := 0.002
 const RUN_SPEED := 8
 const JUMP_VELOCITY := 0.7
 const GRAVITY := 80
+const GRACE_PERIOD = 0.4
 
 @export var bullet_scene: PackedScene
 
 @export var hud: HUD
-@onready var player_model := $MeshInstance3D as Node3D
-@onready var kinematic_body := $CharacterBody3D as CharacterBody3D
-@onready var pivot := $Pivot as Node3D
-@onready var camera := $Pivot/Camera3D as Camera3D
-@onready var hitscan_raycast := $Pivot/HitscanRayCast as RayCast3D
-@onready var raycast_nw := $CharacterBody3D/RayCastNW as RayCast3D
-@onready var raycast_ne := $CharacterBody3D/RayCastNE as RayCast3D
-@onready var raycast_sw := $CharacterBody3D/RayCastSW as RayCast3D
-@onready var raycast_se := $CharacterBody3D/RayCastSE as RayCast3D
+@export var player_model: Node3D
+@export var kinematic_body: CharacterBody3D
+@export var pivot: Node3D
+@export var camera: Camera3D
+@export var hitscan_raycast: RayCast3D
+@export var raycasts: Array[RayCast3D]
 
 ## The player's current velocity in units per second.
 var velocity := Vector3()
@@ -32,8 +30,7 @@ var sniper_mode := false: set = set_sniper_mode
 var refire_timer := 0.0
 
 var camera_speed:Vector2;
-var life := 0.0
-const grace_peried = 0.4
+var time_alive := 0.0
 
 func get_player_position() -> Vector3:
 	return pivot.global_position
@@ -46,22 +43,31 @@ func _ready() -> void:
 	Globals.on_paused_handler(false)
 	rotation = Vector3()
 
-
 func _process(delta: float) -> void:
-	life += delta
+	# emulate MDK's weird camera
+	if time_alive > GRACE_PERIOD:
+		camera_speed *= delta*12
+		camera.rotation.z = lerp(camera.rotation.z,-camera_speed.x/100, 0.1);
+	else:
+		camera_speed = Vector2(0,0)
+
+	pivot.position = pivot.position.lerp(kinematic_body.position, 20*delta)
+	player_model.position = player_model.position.lerp(kinematic_body.position, 50*delta)
+	
+	var direction = player_model.global_position - camera.global_position
+	direction = direction.normalized()
+
+	var angle = atan2(direction.x, direction.z)
+	player_model.rotation = Vector3(0, angle+PI, camera.rotation.z)
+
+func _physics_process(delta: float) -> void:
+	time_alive += delta
 	refire_timer = max(0.0, refire_timer - delta)
 
 	# Apply Doom-style friction.
 	velocity.x *= 1 - 10 * delta
 	velocity.y *= 1 - 0.5 * delta
 	velocity.z *= 1 - 10 * delta
-
-	# emulate MDK's weird camera
-	if life > grace_peried:
-		camera_speed *= delta*12
-		camera.rotation.z = lerp(camera.rotation.z,-camera_speed.x/100, 0.1);
-	else:
-		camera_speed = Vector2(0,0)
 
 	# Apply movement keys.
 	# Player can't move while in sniper mode, as in the original game.
@@ -96,17 +102,10 @@ func _process(delta: float) -> void:
 			var bullet := bullet_scene.instantiate()
 			get_parent().add_child(bullet)
 			bullet.global_transform.origin = hitscan_raycast.get_collision_point()
-	pivot.position = pivot.position.lerp(kinematic_body.position, 20*delta)
-	player_model.position = player_model.position.lerp(kinematic_body.position, 50*delta)
 	
-	var direction = player_model.global_position - camera.global_position
-	direction = direction.normalized()
-
-	var angle = atan2(direction.x, direction.z)
-	player_model.rotation = Vector3(0, angle+PI, camera.rotation.z)
 
 func _input(event: InputEvent) -> void:
-	if life < grace_peried:
+	if time_alive < GRACE_PERIOD:
 		return
 	if event is InputEventMouseMotion:
 		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
@@ -133,7 +132,7 @@ func _input(event: InputEvent) -> void:
 ## Returns `true` if at least one of the raycasts is colliding, `false` otherwise.
 ## This is used for more reliable jump detection when walking on ledges.
 func is_any_raycast_colliding() -> bool:
-	for raycast in [raycast_nw, raycast_ne, raycast_sw, raycast_se]:
+	for raycast in raycasts:
 		if raycast.is_colliding():
 			return true
 

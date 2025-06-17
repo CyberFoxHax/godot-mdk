@@ -29,6 +29,7 @@ sky = SubResource("Sky_6quei")
 
 [node name="LevelLoad" type="Node3D" node_paths=PackedStringArray("player", "enviroment", "group_list")]
 script = ExtResource("1_1ocvx")
+unit_scale = 0.1
 player = NodePath("Player")
 player_material = ExtResource("2_hp56d")
 material_black = ExtResource("4_uovlw")
@@ -49,7 +50,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.51011, -7.62479)
 environment = SubResource("Environment_m6ke4")
 
 [node name="Player" parent="." instance=ExtResource("7_uovlw")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
 
 [node name="ItemList" type="ItemList" parent="."]
 anchors_preset = 9

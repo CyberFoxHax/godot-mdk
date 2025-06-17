@@ -10,10 +10,16 @@
 [sub_resource type="BoxShape3D" id="3"]
 size = Vector3(2, 3.2, 2)
 
-[node name="Player" type="Node3D" node_paths=PackedStringArray("hud")]
+[node name="Player" type="Node3D" node_paths=PackedStringArray("hud", "player_model", "kinematic_body", "pivot", "camera", "hitscan_raycast", "raycasts")]
 script = ExtResource("2")
 bullet_scene = ExtResource("2_1yqc4")
 hud = NodePath("HUD")
+player_model = NodePath("MeshInstance3D")
+kinematic_body = NodePath("CharacterBody3D")
+pivot = NodePath("Pivot")
+camera = NodePath("Pivot/Camera3D")
+hitscan_raycast = NodePath("Pivot/HitscanRayCast")
+raycasts = [NodePath("CharacterBody3D/RayCastNW"), NodePath("CharacterBody3D/RayCastNE"), NodePath("CharacterBody3D/RayCastSW"), NodePath("CharacterBody3D/RayCastSE")]
 
 [node name="Pivot" type="Node3D" parent="."]
 
