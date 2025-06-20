@@ -1,6 +1,3 @@
-#todo
-# load neighbouring arenas
-
 class_name LevelLoad
 extends Node3D
 
@@ -56,13 +53,100 @@ class ArenaObjectGroups:
 	func clear():
 		arenas = {}
 
+class Area3DTrigger:
+	extends Area3D
+	
+	var arena:DTIFile.DTIArena
+	var entity: DTIFile.ArenaEntity
+
+	signal area_triggered(trigger: Area3DTrigger, actor: Node)
+
+	func _ready() -> void:
+		connect("body_entered", _on_body_entered)
+
+	func _on_body_entered(actor: Node):
+		area_triggered.emit(self, actor)
+
+func _on_area_triggered(trigger: Area3DTrigger, actor: Node):
+	if actor is StaticBody3D:
+		return
+
+	if trigger.entity.kind != DTIFile.DTIEntityType.ArenaActivateZone && trigger.entity.kind != DTIFile.DTIEntityType.ArenaShowZone:
+		return
+
+	var l:LevelArena = _level_arenas[trigger.entity.id];
+	l.node.visible = l.node.visible == false
+	print(_level_arenas[trigger.entity.id].name)
+	
+
+func setup_entities(arenas:Array[DTIFile.DTIArena]) -> void:
+	var i:=0
+	for arena:DTIFile.DTIArena in arenas:
+		for entity in arena.entities:
+			i = i + 1
+			var bounds = Bounds.new()
+			bounds._min = MDKFiles.swizzle_vector(entity.pos_min)*unit_scale
+			bounds._max = MDKFiles.swizzle_vector(entity.pos_max)*unit_scale
+
+			var area = Area3DTrigger.new()
+			area.arena = arena
+			area.entity = entity
+				
+			var collision_shape = CollisionShape3D.new()
+			var shape = BoxShape3D.new()
+			collision_shape.shape = shape
+			area.add_child(collision_shape)
+			
+			area.area_triggered.connect(_on_area_triggered)
+
+			var mi = MeshInstance3D.new()
+			var preview_mesh = BoxMesh.new()
+			mi.mesh = preview_mesh
+			area.add_child(mi)
+
+			area.name = "%s %s %s #%d" % [DTIFile.DTIEntityType.keys()[entity.kind], arena.name, entity.id, i]
+			area.position = bounds.get_center()
+			var the_scale = bounds.get_size()
+
+			if the_scale == Vector3.ZERO:
+				the_scale = Vector3.ONE*unit_scale*5
+			
+			if the_scale.x == 0:
+				the_scale.x = unit_scale
+			if the_scale.y == 0:
+				the_scale.y = unit_scale
+			if the_scale.z == 0:
+				the_scale.z = unit_scale
+			
+			if entity.kind == DTIFile.DTIEntityType.ArenaActivateZone || entity.kind == DTIFile.DTIEntityType.ArenaShowZone:
+				the_scale.y = 500 * unit_scale
+
+			shape.size = the_scale
+			preview_mesh.size = the_scale
+
+			var levelarena:LevelArena
+			for a in _level_arenas:
+				if arena.name == a.name:
+					levelarena = a
+					break
+
+			levelarena.node.add_child(area)
+			area.set_meta("kind", DTIFile.DTIEntityType.keys()[entity.kind])
+			area.set_meta("arena_name", arena.name)
+			area.set_meta("id", entity.id)
+			area.set_meta("value", entity.value)
+			area.set_meta("pos_min", bounds._min)
+			area.set_meta("pos_max", bounds._max)
+
 func _ready() -> void:
 	var sw_total := Time.get_ticks_msec()
 	
 	load_files()
 	load_textures()
 	load_skybox()
-	load_kurt()
+	if player:
+		load_kurt()
+
 
 	var sw = Time.get_ticks_msec()
 	await RenderingServer.frame_post_draw
@@ -73,51 +157,22 @@ func _ready() -> void:
 	for loc in traverse.o_mto.room_locations:
 		if room_list.has(loc.name) == false:
 			continue
-		if cut_content[level].dict.get(loc.name) == true:
+		if CutContent.is_cut(level, loc.name):
 			continue
 		create_mesh(loc.room.level_model, loc.name, false)
 
 	for file in traverse.o_sni.files:
 		if room_list.has(file.name) == false:
 			continue
-		if cut_content[level].dict.get(file.name) == true:
+		if CutContent.is_cut(level, file.name):
 			continue
 		create_mesh(file.mesh, file.name, true)
 
-	var i:=0
-	for arena:DTIFile.DTIArena in traverse.dti.arenas:
-		for entity in arena.entities:
-			i = i + 1
-			var bounds = Bounds.new()
-			bounds._min = MDKFiles.swizzle_vector(entity.pos_min)*unit_scale
-			bounds._max = MDKFiles.swizzle_vector(entity.pos_max)*unit_scale
+	setup_entities(traverse.dti.arenas)
 
-			var mi = MeshInstance3D.new()
-			mi.name = "%s %s %s #%d" % [DTIFile.DTIEntityType.keys()[entity.kind], arena.name, entity.id, i]
-			mi.mesh = BoxMesh.new()
-			mi.position = bounds.get_center()
-			mi.scale = bounds.get_size()
-
-			if mi.scale == Vector3.ZERO:
-				mi.scale = Vector3.ONE*unit_scale*5
-			
-			if mi.scale.x == 0:
-				mi.scale.x = unit_scale
-			if mi.scale.y == 0:
-				mi.scale.y = unit_scale
-			if mi.scale.z == 0:
-				mi.scale.z = unit_scale
-
-			add_child(mi)
-			mi.set_meta("kind", DTIFile.DTIEntityType.keys()[entity.kind])
-			mi.set_meta("arena_name", arena.name)
-			mi.set_meta("id", entity.id)
-			mi.set_meta("value", entity.value)
-			mi.set_meta("pos_min", bounds._min)
-			mi.set_meta("pos_max", bounds._max)
-
-	player.position = MDKFiles.swizzle_vector(traverse.dti.meta_data.starting_pos)*unit_scale + Vector3(0,4,0)
-	player.set_y_rotation_degrees(traverse.dti.meta_data.starting_rot+90)
+	if player:
+		player.position = MDKFiles.swizzle_vector(traverse.dti.meta_data.starting_pos)*unit_scale + Vector3(0,4,0)
+		player.set_y_rotation_degrees(traverse.dti.meta_data.starting_rot+90)
 	
 	MyGlobal.print_info("Level constructed in %d ms" % (Time.get_ticks_msec() - sw))
 	MyGlobal.print_info("Total loading time %d ms" % (Time.get_ticks_msec() - sw_total))
@@ -129,10 +184,11 @@ func _ready() -> void:
 	# 		print("\tgroupid:%d count:%d" % [key2, len(arena.dict[key2].arr)])
 
 	
-	# for arena in _level_arenas:
-	# 	arena.node.visible = false
+	for arena in _level_arenas:
+		arena.node.visible = false
 	
-	# _level_arenas[0].node.visible = true
+	_level_arenas[0].node.visible = true
+	_level_arenas[9].node.visible = true
 
 	player_arena_changed.connect(_on_arena_changed)
 	group_list.multi_selected.connect(group_list_selected)
@@ -161,65 +217,19 @@ var current_arena : LevelArena
 func _process(delta: float) -> void:
 	time += delta
 
-	## check which arena player is in, if changed dispatch event
-	# possible gotcha: Player can be in multiple arenas
-	# possible gotcha: Arena is mesh bounding box for group 0
-	var new_arena:LevelArena
-	for arena in _level_arenas:
-		if arena.bounds.is_point_inside(player.get_player_position()):
-			new_arena = arena
-			break
-	if new_arena != null:
-		if new_arena != current_arena:
-			player_arena_changed.emit(current_arena, new_arena)
-		current_arena = new_arena
-
-
-class CutContent:
-	func _init(mdict:Dictionary[String, bool]) -> void:
-		dict = mdict
-
-	var dict:Dictionary[String, bool]
-
-
-var cut_content:Dictionary[MDKFiles.Levels, CutContent] = {
-	MDKFiles.Levels.LEVEL3: CutContent.new({
-		"HMO_3":true,
-		"HMO_7":true,
-		"CHMO_3":true,
-		"CHMO_7":true
-	}),
-	MDKFiles.Levels.LEVEL4: CutContent.new({
-		"MEAT_2":true,
-		"MEAT_9":true,
-		"CMEAT_2":true,
-		"CMEAT_9":true,
-	}),
-	MDKFiles.Levels.LEVEL5: CutContent.new({
-		"MUSE_6":true,
-		"MUSE_7":true,
-		"MUSE_8":true,
-		"MUSE_9":true,
-		"MUSE_10":true,
-		"CMUSE_5":true,
-		"CMUSE_6":true,
-		"CMUSE_7":true,
-		"CMUSE_8":true,
-		"CMUSE_9":true
-	}),
-	MDKFiles.Levels.LEVEL6: CutContent.new({
-		"OLYM_9":true,
-		"COLYM_9":true
-	}),
-	MDKFiles.Levels.LEVEL7: CutContent.new({
-		"DANT_8": true,
-		"CDANT_8": true
-	}),
-	MDKFiles.Levels.LEVEL8: CutContent.new({
-		"GUNT_9": true,
-		"CGUNT_8": true
-	})
-}
+	if player:
+		## check which arena player is in, if changed dispatch event
+		# possible gotcha: Player can be in multiple arenas
+		# possible gotcha: Arena is mesh bounding box for group 0
+		var new_arena:LevelArena
+		for arena in _level_arenas:
+			if arena.bounds.is_point_inside(player.get_player_position()):
+				new_arena = arena
+				break
+		if new_arena != null:
+			if new_arena != current_arena:
+				player_arena_changed.emit(current_arena, new_arena)
+			current_arena = new_arena
 
 class LevelArena:
 	var mdk_mesh: MDKMesh
@@ -249,7 +259,7 @@ class Bounds:
 		return (_min + _max) / 2.0
 
 	func get_size() -> Vector3:
-		return _max - _min
+		return abs(_max - _min)
 
 	func is_point_inside(point: Vector3) -> bool:
 		return (point.x >= _min.x and point.x <= _max.x and
@@ -399,6 +409,7 @@ func create_material(material_flags: int, materials_map: Dictionary[int, Texture
 	elif material_flags < -1028:
 		# no idea
 		MyGlobal.print_warn("Material flag less than -1028, what does this mean? Who knows, find the surface in-game to learn something");
+		## make it pink or something
 		return null
 	else:
 		MyGlobal.print_error("Uknown flag: %d" % material_flags)
@@ -439,7 +450,7 @@ func load_skybox():
 func load_textures():
 	var traverse = files.traverse[level]
 	for loc in traverse.o_mto.room_locations:
-		if cut_content[level].dict.get(loc.name) == true:
+		if CutContent.is_cut(level, loc.name):
 			continue
 		var room = loc.room
 		for i in room.palette.size():

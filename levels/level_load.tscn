@@ -9,9 +9,9 @@
 [ext_resource type="Shader" uid="uid://n6pg1wi4uro7" path="res://shaders/MDKSpritesheetConverter.gdshader" id="5_bj77j"]
 [ext_resource type="Shader" uid="uid://cdkeql5hnnjga" path="res://shaders/color.gdshader" id="6_5jpsj"]
 [ext_resource type="Shader" uid="uid://d3h5qdausvsns" path="res://shaders/transparent.gdshader" id="6_hp56d"]
-[ext_resource type="PackedScene" uid="uid://b74fpcybwy21o" path="res://actors/player/player.tscn" id="7_uovlw"]
 [ext_resource type="Shader" uid="uid://16tvjhlr8avg" path="res://shaders/shiny.gdshader" id="8_8pd7r"]
 [ext_resource type="Resource" uid="uid://df3lmouf2ch3l" path="res://mdk_data/godot_converter_helper.tres" id="10_mola2"]
+[ext_resource type="PackedScene" uid="uid://b74fpcybwy21o" path="res://actors/player/player.tscn" id="12_7x7gr"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_l2661"]
 shader = ExtResource("3_jrfhj")
@@ -29,7 +29,6 @@ sky = SubResource("Sky_6quei")
 
 [node name="LevelLoad" type="Node3D" node_paths=PackedStringArray("player", "enviroment", "group_list")]
 script = ExtResource("1_1ocvx")
-unit_scale = 0.1
 player = NodePath("Player")
 player_material = ExtResource("2_hp56d")
 material_black = ExtResource("4_uovlw")
@@ -49,8 +48,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.51011, -7.62479)
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_m6ke4")
 
-[node name="Player" parent="." instance=ExtResource("7_uovlw")]
-
 [node name="ItemList" type="ItemList" parent="."]
 anchors_preset = 9
 anchor_bottom = 1.0
@@ -63,3 +60,5 @@ item_count = 3
 item_0/text = "0"
 item_1/text = "1"
 item_2/text = "2"
+
+[node name="Player" parent="." instance=ExtResource("12_7x7gr")]

@@ -1,0 +1,15 @@
+show a corridor when door opens, hide corridor after exiting and the door closes, MDK does not allow back tracking
+time to find the entities in CMI, first task is getting their positions to display
+
+#free look controller
+
+load neighbouring arenas
+arena poly submeshing
+#arena entities
+    loading zones are infinite height, then is the y axis used for something else?
+
+investigate id overlap between entities and submeshes
+
+remove unused arenas from root (because godot can't really disable them)
+
+need a new spritesheet animator

@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://oxjerul5aygm"]
+
+[ext_resource type="Script" uid="uid://co6noaovbodbj" path="res://actors/free_look.gd" id="1_nrg7m"]
+
+[node name="FreeLook" type="Node3D" node_paths=PackedStringArray("camera")]
+script = ExtResource("1_nrg7m")
+camera = NodePath("Camera3D")
+
+[node name="Camera3D" type="Camera3D" parent="."]
