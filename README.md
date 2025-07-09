@@ -22,7 +22,7 @@ Currently only levels mesh have been correctly loaded. That is all levels.
 MDK File formats related information can be retrieved by analysing these projects
 
 1. https://github.com/brandonhare/mdk-parse/
-2. MDK-Tools by Buxxe, can be found on the mdk discord server: [https://discord.gg/KGG9ttDg](https://discord.gg/JUVnWZR6Z4)
+2. MDK-Tools by Buxxe, can be found on the mdk discord server: https://discord.gg/JUVnWZR6Z4
 
 most of the project is based on MDK-Tools. But there is no details on the 3D Animations. That should be in the mdk-parse project.
 
