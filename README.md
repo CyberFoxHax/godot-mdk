@@ -22,7 +22,7 @@ Currently only levels mesh have been correctly loaded. That is all levels.
 MDK File formats related information can be retrieved by analysing these projects
 
 1. https://github.com/brandonhare/mdk-parse/
-2. MDK-Tools by Buxxe, can be found on the mdk discord server: https://discord.gg/KGG9ttDg
+2. MDK-Tools by Buxxe, can be found on the mdk discord server: [https://discord.gg/KGG9ttDg](https://discord.gg/JUVnWZR6Z4)
 
 most of the project is based on MDK-Tools. But there is no details on the 3D Animations. That should be in the mdk-parse project.
 
@@ -37,7 +37,7 @@ You can buy the original game on [GOG](https://www.gog.com/game/mdk)
 or [Steam](https://store.steampowered.com/app/38450/MDK/).
 *Waiting for a sale?* Set up an email alert using [IsThereAnyIdeal](https://isthereanydeal.com/game/mdk/info/).
 
-MDK's game folder is hardcoded in levels/load_level.gd#3
+MDK's game can be in several locations and to find the list look in: levels/load_level.gd#3
 
 (and without redistributing it within this repository).
 
